@@ -6,7 +6,7 @@ import { createRoot } from "react-dom/client";
 import { MapContext, NavigationControl, StaticMap } from "react-map-gl";
 
 const GEOARROW_POINT_DATA =
-  "http://localhost:8080/03MAR_CHL5D_6MFORECAST.parquet.feather";
+  "http://localhost:8080/03MAR_CHL5D_6MFORECAST.feather";
 
 const INITIAL_VIEW_STATE = {
   latitude: 20,
@@ -37,8 +37,7 @@ function Root() {
     // declare the data fetching function
     const fetchData = async () => {
       const data = await fetch(GEOARROW_POINT_DATA);
-      const buffer = await data.arrayBuffer();
-      const table = arrow.tableFromIPC(buffer);
+      const table = await arrow.tableFromIPC(data);
       setTable(table);
     };
 
@@ -48,7 +47,6 @@ function Root() {
   });
 
   const layers: Layer[] = [];
-  console.log("table", table)
 
   table &&
     layers.push(
@@ -56,14 +54,17 @@ function Root() {
         id: "geoarrow-points",
         data: table,
         // Pre-computed colors in the original table
-        // getFillColor: table.getChild("colors")!,
-        opacity: 0.1,
+        opacity: 1,
+        getFillColor: table.getChild("colors")!,
+        radiusUnits: "pixels",
         getRadius: ({ index, data }) => {
           const recordBatch = data.data;
           const row = recordBatch.get(index)!;
-          return row["avg_d_kbps"] / 50;
+          if (row["CHL"] > 10) {
+            console.log(row["CHL"])
+          }
+          return row["CHL"] > 0.2 ? row["CHL"] : 0;
         },
-        radiusMinPixels: 0.1,
         pickable: true,
       }),
     );
