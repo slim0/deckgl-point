@@ -48,6 +48,7 @@ function Root() {
   });
 
   const layers: Layer[] = [];
+  console.log("table", table)
 
   table &&
     layers.push(
@@ -55,7 +56,7 @@ function Root() {
         id: "geoarrow-points",
         data: table,
         // Pre-computed colors in the original table
-        getFillColor: table.getChild("colors")!,
+        // getFillColor: table.getChild("colors")!,
         opacity: 0.1,
         getRadius: ({ index, data }) => {
           const recordBatch = data.data;
