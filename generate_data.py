@@ -1,10 +1,8 @@
 from pathlib import Path
 
 import geopandas as gpd
-import pandas as pd
 import pyarrow as pa
 import pyarrow.feather as feather
-from lonboard._geoarrow.geopandas_interop import geopandas_to_geoarrow
 from lonboard.colormap import apply_continuous_cmap
 from palettable.colorbrewer.diverging import BrBG_10
 
@@ -19,7 +17,8 @@ def main():
         raise ValueError(msg)
 
     gdf = gpd.read_parquet(path)
-    table = geopandas_to_geoarrow(gdf, preserve_index=False)
+    geopandas_arrow_table = gdf.to_arrow()
+    arrow_table: pa.Table = pa.table(geopandas_arrow_table)
 
     min_bound = gdf[chl_column].min()
     max_bound = gdf[chl_column].max()
@@ -27,14 +26,13 @@ def main():
     normalized_chl = (chl - min_bound) / (max_bound - min_bound)
 
     colors = apply_continuous_cmap(normalized_chl, BrBG_10)
-    table = table.append_column(
-        "colors", pa.FixedSizeListArray.from_arrays(colors.flatten("C"), 3)
-    )
+    # arrow_table = arrow_table.append_column(
+    #     "colors", pa.FixedSizeListArray.from_arrays(colors.flatten("C"), 3)
+    # )
 
     feather.write_feather(
-        table, f"{filename}.feather", compression="uncompressed"
+        arrow_table, f"{filename}.feather", compression="uncompressed"
     )
-
 
 if __name__ == "__main__":
     main()
