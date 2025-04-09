@@ -4,3 +4,4 @@ pyarrow
 shapely
 lonboard
 palettable
+matplotlib

@@ -3,7 +3,7 @@
 ## Data for example:
 
 ```
-wget https://ookla-open-data.s3.us-west-2.amazonaws.com/parquet/performance/type=mobile/year=2019/quarter=1/2019-01-01_performance_mobile_tiles.parquet
+wget https://minio.dive.edito.eu/project-chlorophyll/03MAR_CHL5D_6MFORECAST.parquet
 poetry install
 poetry run python generate_data.py
 ```
