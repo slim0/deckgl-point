@@ -4,7 +4,7 @@ import DeckGL, { Layer, PickingInfo } from "deck.gl";
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MapContext, NavigationControl, StaticMap } from "react-map-gl";
-import { listObjectsWithPrefix } from "./s3";
+import { getObjectByteArray, listObjectsWithPrefix } from "./s3";
 
 
 const DATA_BASE_URI = "https://minio.dive.edito.eu"
@@ -46,9 +46,8 @@ function Root() {
       setFeatherFilesS3Key(filteredObjects)
       for (let index = 0; index < filteredObjects.length; index++) {
         const featherFileS3ObjectKey = filteredObjects[index];
-        const url = `${DATA_BASE_URI}/${S3_BUCKET_NAME}/${featherFileS3ObjectKey}`
-        const data = await fetch(url);
-        const table = await arrow.tableFromIPC(data);
+        const data = await getObjectByteArray(S3_BUCKET_NAME, featherFileS3ObjectKey)
+        const table = arrow.tableFromIPC(data);
         setTable(table);
         await new Promise(resolve => setTimeout(resolve, 1000));
       }

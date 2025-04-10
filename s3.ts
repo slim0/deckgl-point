@@ -33,26 +33,21 @@ export async function listObjectsWithPrefix(
   }
 }
 
-export async function getObject(
+
+export async function getObjectByteArray(
   bucketName: string,
   key: string,
-): Promise<any> {
+): Promise<Uint8Array<ArrayBufferLike> | undefined> {
   const objects: string[] = []
   try {
     const getObjectCommand = new GetObjectCommand({
       Bucket: bucketName,
       Key: key
     })
-    s3Client.send(getObjectCommand, (err, data) => {
-      if (err) {
-        throw err
-      } else {
-        return data?.Body
-      }
-    });
-    return objects
+    const response = await s3Client.send(getObjectCommand);
+    return response.Body?.transformToByteArray()
   } catch (error) {
     console.error("Error listing objects:", error);
-    return objects
+    return undefined
   }
 }
