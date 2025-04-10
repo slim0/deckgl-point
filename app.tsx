@@ -4,6 +4,12 @@ import DeckGL, { Layer, PickingInfo } from "deck.gl";
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MapContext, NavigationControl, StaticMap } from "react-map-gl";
+import { listObjectsWithPrefix } from "./s3";
+
+
+const DATA_BASE_URI = "https://minio.dive.edito.eu"
+const S3_BUCKET_NAME = "project-chlorophyll"
+const S3_PREFIX = "TESTS_SIMON"
 
 const GEOARROW_POINT_DATA =
   "http://localhost:8080/03MAR_CHL5D_6MFORECAST.feather";
@@ -31,20 +37,24 @@ function Root() {
     }
   };
 
-  const [table, setTable] = useState<arrow.Table | null>(null);
+  const [table, setTable] = useState<arrow.Table | undefined>(undefined);
+  const [featherFilesS3Key, setFeatherFilesS3Key] = useState<string[]>([]);
 
   useEffect(() => {
-    // declare the data fetching function
-    const fetchData = async () => {
-      const data = await fetch(GEOARROW_POINT_DATA);
-      const table = await arrow.tableFromIPC(data);
-      setTable(table);
-    };
+    listObjectsWithPrefix(S3_BUCKET_NAME, S3_PREFIX).then(async (objects) => {
+      const filteredObjects = objects.filter((object) => object.endsWith(".feather"))
+      setFeatherFilesS3Key(filteredObjects)
+      for (let index = 0; index < filteredObjects.length; index++) {
+        const featherFileS3ObjectKey = filteredObjects[index];
+        const url = `${DATA_BASE_URI}/${S3_BUCKET_NAME}/${featherFileS3ObjectKey}`
+        const data = await fetch(url);
+        const table = await arrow.tableFromIPC(data);
+        setTable(table);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
-    if (!table) {
-      fetchData().catch(console.error);
-    }
-  });
+    })
+  }, [setFeatherFilesS3Key])
 
   const layers: Layer[] = [];
 
@@ -53,16 +63,12 @@ function Root() {
       new GeoArrowScatterplotLayer({
         id: "geoarrow-points",
         data: table,
-        // Pre-computed colors in the original table
         opacity: 1,
         getFillColor: table.getChild("colors")!,
         radiusUnits: "pixels",
         getRadius: ({ index, data }) => {
           const recordBatch = data.data;
           const row = recordBatch.get(index)!;
-          if (row["CHL"] > 10) {
-            console.log(row["CHL"])
-          }
           return row["CHL"] > 0.2 ? row["CHL"] : 0;
         },
         pickable: true,
