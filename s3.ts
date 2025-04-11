@@ -1,16 +1,20 @@
 import { GetObjectCommand, ListObjectsCommand, S3Client } from "@aws-sdk/client-s3";
 
-const s3Client = new S3Client({
-  region: "waw3-1", 
-  endpoint: "https://minio.dive.edito.eu",
-  forcePathStyle: true,
-  signer: {
-    sign: (request) => Promise.resolve(request),
-  },
-  credentials: { accessKeyId: "", secretAccessKey: "" },
-});
+export function getAnonymousS3Client(endpoint: string, region: string): S3Client {
+  const s3Client = new S3Client({
+    region,
+    endpoint,
+    forcePathStyle: true,
+    signer: {
+      sign: (request) => Promise.resolve(request),
+    },
+    credentials: { accessKeyId: "", secretAccessKey: "" },
+  });
+  return s3Client
+}
 
 export async function listObjectsWithPrefix(
+  s3Client: S3Client,
   bucketName: string,
   prefix: string,
 ): Promise<string[]> {
@@ -35,6 +39,7 @@ export async function listObjectsWithPrefix(
 
 
 export async function getObjectByteArray(
+  s3Client: S3Client,
   bucketName: string,
   key: string,
 ): Promise<Uint8Array<ArrayBufferLike> | undefined> {
