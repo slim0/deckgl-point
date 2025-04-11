@@ -1,5 +1,6 @@
 import { GeoArrowScatterplotLayer } from "@geoarrow/deck.gl-layers";
 import * as arrow from "apache-arrow";
+import * as d3 from "d3";
 import DeckGL, { Layer, MapViewState, PickingInfo } from "deck.gl";
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -24,6 +25,10 @@ const INITIAL_VIEW_STATE: MapViewState = {
   bearing: 0,
   pitch: 0,
 };
+
+const colorLow = d3.color("#2C353B")
+const colorHigh = d3.color("#5FD490")
+const COLOR_GRADIENT = d3.scaleLinear([0, 1], [colorLow, colorHigh]).clamp(true)
 
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
@@ -75,9 +80,14 @@ function Root() {
         id: "geoarrow-points",
         data: table,
         opacity: 1,
-        getFillColor: table.getChild("colors")!,
+        getRadius: 1, 
         radiusUnits: "pixels",
-        getRadius: 1,
+        getFillColor: ({ index, data, target }) => {
+          const recordBatch = data.data;
+          const row = recordBatch.get(index)!;
+          const color = d3.color(COLOR_GRADIENT(row["CHL"])!).rgb()
+          return [color.r, color.g, color.b]
+        },
         pickable: true,
       }),
     );

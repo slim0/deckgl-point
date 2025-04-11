@@ -21,24 +21,12 @@ def main():
 
     gdf = geopandas.read_parquet(path).dropna()
     gdf = gdf[gdf[chl_column] > 0.03]
-    
-    min_bound = 0
-    max_bound = 1
 
     unique_times = gdf.time.unique()
     for time in unique_times:
         time: pandas.Timestamp
-    
         gdf_by_time = gdf[gdf['time'] == time]
-        chl = gdf_by_time[chl_column]
-        normalized_chl = (chl - min_bound) / (max_bound - min_bound)
-
-        colors = apply_continuous_cmap(normalized_chl, BluGrn_6)
-        
         table = geopandas_to_geoarrow(gdf_by_time, preserve_index=False)
-        table = table.append_column(
-            "colors", pyarrow.FixedSizeListArray.from_arrays(colors.flatten("C"), 3)
-        )
         feather.write_feather(
             table, f"{base_filename}-{time.date()}.feather", compression="uncompressed"
         )
