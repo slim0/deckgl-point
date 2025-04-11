@@ -4,15 +4,18 @@ import DeckGL, { Layer, MapViewState, PickingInfo } from "deck.gl";
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
-import { getAnonymousS3Client, getObjectByteArray, listObjectsWithPrefix } from "./s3";
+import {
+  getAnonymousS3Client,
+  getObjectByteArray,
+  listObjectsWithPrefix,
+} from "./s3";
 
+const S3_ENDPOINT = "https://minio.dive.edito.eu";
+const S3_REGION = "waw3-1";
+const S3_BUCKET_NAME = "project-chlorophyll";
+const S3_PREFIX = "TESTS_SIMON";
 
-const S3_ENDPOINT = "https://minio.dive.edito.eu"
-const S3_REGION = "waw3-1"
-const S3_BUCKET_NAME = "project-chlorophyll"
-const S3_PREFIX = "TESTS_SIMON"
-
-const ANIMATION_TIMEOUT = 1000
+const ANIMATION_TIMEOUT = 1000;
 
 const INITIAL_VIEW_STATE: MapViewState = {
   latitude: 20,
@@ -22,7 +25,7 @@ const INITIAL_VIEW_STATE: MapViewState = {
   pitch: 0,
 };
 
-const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION)
+const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json";
@@ -31,6 +34,10 @@ const NAV_CONTROL_STYLE = {
   top: 10,
   left: 10,
 };
+
+const fileRegExp = new RegExp(
+  `^${S3_PREFIX}/03MAR_CHL5D_6MFORECAST-\\d{4}-\\d{2}-\\d{2}.feather$`,
+);
 
 function Root() {
   const onClick = (info: PickingInfo) => {
@@ -42,18 +49,27 @@ function Root() {
   const [table, setTable] = useState<arrow.Table | undefined>(undefined);
 
   useEffect(() => {
-    listObjectsWithPrefix(s3Client, S3_BUCKET_NAME, S3_PREFIX).then(async (objects) => {
-      const filteredObjects = objects.filter((object) => object.endsWith(".feather"))
-      for (let index = 0; index < filteredObjects.length; index++) {
-        const featherFileS3ObjectKey = filteredObjects[index];
-        const data = await getObjectByteArray(s3Client, S3_BUCKET_NAME, featherFileS3ObjectKey)
-        const table = arrow.tableFromIPC(data);
-        setTable(table);
-        await new Promise(resolve => setTimeout(resolve, ANIMATION_TIMEOUT));
-      }
-
-    })
-  }, [])
+    listObjectsWithPrefix(s3Client, S3_BUCKET_NAME, S3_PREFIX).then(
+      async (objects) => {
+        const filteredObjects = objects.filter((object) =>
+          object.match(fileRegExp),
+        );
+        for (let index = 0; index < filteredObjects.length; index++) {
+          const featherFileS3ObjectKey = filteredObjects[index];
+          const data = await getObjectByteArray(
+            s3Client,
+            S3_BUCKET_NAME,
+            featherFileS3ObjectKey,
+          );
+          const table = arrow.tableFromIPC(data);
+          setTable(table);
+          await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_TIMEOUT),
+          );
+        }
+      },
+    );
+  }, []);
 
   const layers: Layer[] = [];
 
