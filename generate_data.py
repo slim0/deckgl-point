@@ -19,12 +19,13 @@ def main():
         msg = f"Please download file to this directory from {url=}."
         raise ValueError(msg)
 
-    gdf = geopandas.read_parquet(path).sort_values(by=["time"])
+    gdf = geopandas.read_parquet(path).dropna()
+    gdf = gdf[gdf[chl_column] > 0.2]
     
     unique_times = gdf.time.unique()
     for time in unique_times:
         time: pandas.Timestamp
-        gdf_by_time = gdf[gdf['time'] == time].dropna()
+        gdf_by_time = gdf[gdf['time'] == time]
 
         table = geopandas_to_geoarrow(gdf_by_time, preserve_index=False)
 

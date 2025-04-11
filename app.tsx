@@ -81,11 +81,7 @@ function Root() {
         opacity: 1,
         getFillColor: table.getChild("colors")!,
         radiusUnits: "pixels",
-        getRadius: ({ index, data }) => {
-          const recordBatch = data.data;
-          const row = recordBatch.get(index)!;
-          return row["CHL"] > 0.2 ? row["CHL"] : 0;
-        },
+        getRadius: 1,
         pickable: true,
       }),
     );
