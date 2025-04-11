@@ -29,11 +29,7 @@ const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json";
-const NAV_CONTROL_STYLE = {
-  position: "absolute",
-  top: 10,
-  left: 10,
-};
+
 
 const fileRegExp = new RegExp(
   `^${S3_PREFIX}/03MAR_CHL5D_6MFORECAST-\\d{4}-\\d{2}-\\d{2}.feather$`,
