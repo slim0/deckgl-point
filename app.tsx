@@ -1,4 +1,4 @@
-import { GeoArrowScatterplotLayer } from "@geoarrow/deck.gl-layers";
+import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapViewState, PickingInfo } from "deck.gl";
@@ -14,7 +14,7 @@ import {
 const S3_ENDPOINT = "https://minio.dive.edito.eu";
 const S3_REGION = "waw3-1";
 const S3_BUCKET_NAME = "project-chlorophyll";
-const S3_PREFIX = "TESTS_SIMON";
+const S3_PREFIX = "TEST";
 
 const ANIMATION_TIMEOUT = 1000;
 
@@ -28,7 +28,7 @@ const INITIAL_VIEW_STATE: MapViewState = {
 
 const colorLow = d3.color("#2C353B")
 const colorHigh = d3.color("#5FD490")
-const COLOR_GRADIENT = d3.scaleLinear([0, 1], [colorLow, colorHigh]).clamp(true)
+const COLOR_GRADIENT = d3.scaleLog([0.03, 10], [colorLow, colorHigh])
 
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
@@ -76,19 +76,23 @@ function Root() {
 
   table &&
     layers.push(
-      new GeoArrowScatterplotLayer({
-        id: "geoarrow-points",
+      new GeoArrowPolygonLayer({
+        id: "geoarrow-polygons",
+        stroked: true,
+        filled: true,
         data: table,
+        extruded: false,
+        wireframe: true,
+        positionFormat: "XY",
+        autoHighlight: false,
         opacity: 1,
-        getRadius: 1, 
-        radiusUnits: "pixels",
         getFillColor: ({ index, data, target }) => {
           const recordBatch = data.data;
           const row = recordBatch.get(index)!;
           const color = d3.color(COLOR_GRADIENT(row["CHL"])!).rgb()
           return [color.r, color.g, color.b]
         },
-        pickable: true,
+        _normalize: false,
       }),
     );
 
