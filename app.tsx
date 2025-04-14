@@ -14,7 +14,7 @@ import {
 const S3_ENDPOINT = "https://minio.dive.edito.eu";
 const S3_REGION = "waw3-1";
 const S3_BUCKET_NAME = "project-chlorophyll";
-const S3_PREFIX = "TEST";
+const S3_PREFIX = "TESTS_SIMON";
 
 const ANIMATION_TIMEOUT = 1000;
 
@@ -28,16 +28,16 @@ const INITIAL_VIEW_STATE: MapViewState = {
 
 const colorLow = d3.color("#2C353B")
 const colorHigh = d3.color("#5FD490")
-const COLOR_GRADIENT = d3.scaleLog([0.03, 10], [colorLow, colorHigh])
+const COLOR_GRADIENT = d3.scaleLinear([0, 1], [colorLow, colorHigh])
 
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json";
 
-
+// 04APR_CHL5D_6MFORECAST_norm-2025-04-01.feather
 const fileRegExp = new RegExp(
-  `^${S3_PREFIX}/03MAR_CHL5D_6MFORECAST-\\d{4}-\\d{2}-\\d{2}.feather$`,
+  `^${S3_PREFIX}/04APR_CHL5D_6MFORECAST_norm-\\d{4}-\\d{2}-\\d{2}.feather$`,
 );
 
 function Root() {

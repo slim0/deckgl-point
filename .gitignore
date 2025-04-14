@@ -1,5 +1,4 @@
 node_modules
 .vscode
-*.parquet
-*.feather
-*.arrow
+data
+.DS_Store

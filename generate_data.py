@@ -8,10 +8,11 @@ import time
 
 GRID_SIZE = 0.25
 
-BASE_FILENAME = "03MAR_CHL5D_6MFORECAST"
+BASE_FILENAME = "04APR_CHL5D_6MFORECAST_norm"
 PARQUET_FILE = f"{BASE_FILENAME}.parquet"
+DATA_FOLDER = "data"
 URL = f"https://minio.dive.edito.eu/project-chlorophyll/{PARQUET_FILE}"
-LOCAL_PATH_TO_PARQUET_FILE = Path(PARQUET_FILE)
+LOCAL_PATH_TO_PARQUET_FILE = Path(DATA_FOLDER) / Path(PARQUET_FILE)
 CHL_COLUMN = "CHL"
 
 def create_polygon(point: Point):    
@@ -31,9 +32,7 @@ def main():
         msg = f"Please download file to this directory from {URL=}."
         raise ValueError(msg)
 
-    gdf = geopandas.read_parquet(LOCAL_PATH_TO_PARQUET_FILE).dropna()
-    gdf = gdf[gdf[CHL_COLUMN] > 0.03]
-    
+    gdf = geopandas.read_parquet(LOCAL_PATH_TO_PARQUET_FILE).dropna()    
     print(f"Total number of rows: {len(gdf)}")
     start_time = time.time()
     gdf["geometry"] = gdf["geometry"].map(create_polygon)
@@ -45,8 +44,9 @@ def main():
         unique_time: pandas.Timestamp
         gdf_by_time = gdf[gdf['time'] == unique_time]
         table = geopandas_to_geoarrow(gdf_by_time, preserve_index=False)
+        destination = Path(DATA_FOLDER) / Path(f"{BASE_FILENAME}-{unique_time.date()}.feather")
         feather.write_feather(
-            table, f"{BASE_FILENAME}-{unique_time.date()}.feather", compression="uncompressed"
+            table, destination, compression="uncompressed"
         )
 
 if __name__ == "__main__":
