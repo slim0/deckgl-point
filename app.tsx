@@ -5,7 +5,7 @@ import { Box, Button, Slider, Tooltip } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
-import React, { useEffect, useReducer, useRef } from "react";
+import React, { useEffect, useReducer } from "react";
 import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
 import "./App.css";
@@ -75,7 +75,6 @@ function App() {
     { table, isPlaying, currentIndex, filesS3Keys, error },
     dispatch,
   ] = useReducer(reducer, initialState);
-  const intervalRef = useRef<NodeJS.Timeout>();
 
   const fetchData = async (index: number) => {
     const key = filesS3Keys[index];
