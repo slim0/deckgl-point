@@ -139,7 +139,7 @@ function App() {
 
     
   useEffect(() => {
-    fetchData(currentIndex);
+    filesS3Keys.length > 0 && fetchData(currentIndex);
   }, [filesS3Keys]);
 
   const layers: Layer[] = [];
