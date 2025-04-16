@@ -1,4 +1,22 @@
 .my-app {
+    height: 100%;
+    width: 100%;
+    position: absolute; 
+    top: 0; 
+    left: 0;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
+}
+
+.controller {
+    display: flex;
+    width: 95%;
+    position: absolute;
+    bottom: 0;
+    margin-bottom: 20px;
+}
+
+.play-button {
+    width: 8%;
+    align-self: flex-start;
 }

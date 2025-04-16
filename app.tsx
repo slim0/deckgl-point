@@ -159,21 +159,25 @@ function App() {
       >
         <StaticMap mapStyle={MAP_STYLE} />
       </DeckGL>
-      <Box>
-        <Slider
-          value={s3ObjectCurrentIndex}
-          onChange={(_event, index) => handleChangeDate(index)}
-          step={1}
-          min={0}
-          max={s3ObjectKeys.length - 1}
-        />
+      <Box className="controller">
         <Button
+          style={{color: "white", opacity: "70%"}}
+          className="play-button"
           variant="text"
           startIcon={isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
           onClick={() => handlePlayPause(!isPlaying)}
         >
           {valuetext(s3ObjectCurrentIndex)}
         </Button>
+        <Slider
+          style={{color: "white", opacity: "70%"}}
+          className="slider"
+          value={s3ObjectCurrentIndex}
+          onChange={(_event, index) => handleChangeDate(index)}
+          step={1}
+          min={0}
+          max={s3ObjectKeys.length - 1}
+        />
       </Box>
     </div>
   );
