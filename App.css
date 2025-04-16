@@ -14,9 +14,10 @@
     position: absolute;
     bottom: 0;
     margin-bottom: 20px;
+    justify-content: space-around;
+    align-items: center;
 }
 
 .play-button {
-    width: 8%;
     align-self: flex-start;
 }

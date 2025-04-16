@@ -1,7 +1,7 @@
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
-import { Box, Button, Slider } from "@mui/material";
+import { Box, Button, Slider, Tooltip } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
@@ -77,8 +77,8 @@ function App() {
   ] = useReducer(reducer, initialState);
   const intervalRef = useRef<NodeJS.Timeout>();
 
-  const fetchData = async () => {
-    const key = filesS3Keys[currentIndex];
+  const fetchData = async (index: number) => {
+    const key = filesS3Keys[index];
     try {
       const data = await getObjectByteArray(s3Client, S3_BUCKET_NAME, key);
       const table = arrow.tableFromIPC(data);
@@ -104,6 +104,7 @@ function App() {
 
   const handleChangeDate = async (newIndex: number) => {
     dispatch({ type: "dateChanged", result: newIndex });
+    await fetchData(newIndex);
   };
 
   const handlePlayPause = async (newValue: boolean) => {
@@ -111,20 +112,35 @@ function App() {
   };
 
   useEffect(() => {
+    let cancelled = false;
+  
+    const runAnimation = async () => {
+      while (!cancelled && isPlaying && currentIndex < filesS3Keys.length - 1) {
+        await fetchData(currentIndex);
+        if (!cancelled) {
+          dispatch({ type: "dateChanged", result: currentIndex + 1 });
+        }
+        await new Promise((resolve) => setTimeout(resolve, ANIMATION_TIMEOUT));
+      }
+  
+      if (currentIndex >= filesS3Keys.length - 1) {
+        dispatch({ type: "PlayButtonClicked", result: false });
+      }
+    };
+  
     if (isPlaying) {
-      intervalRef.current = setInterval(() => {
-        dispatch({ type: "dateChanged", result: currentIndex + 1 });
-      }, ANIMATION_TIMEOUT);
-    } else {
-      clearInterval(intervalRef.current);
+      runAnimation();
     }
-    return () => clearInterval(intervalRef.current);
-  }, [isPlaying, currentIndex]);
+  
+    return () => {
+      cancelled = true;
+    };
+  }, [isPlaying, currentIndex, filesS3Keys]);
 
     
   useEffect(() => {
-    fetchData();
-  }, [filesS3Keys, currentIndex]);
+    fetchData(currentIndex);
+  }, [filesS3Keys]);
 
   const layers: Layer[] = [];
 
@@ -150,10 +166,11 @@ function App() {
       }),
     );
 
-  function valuetext(index: number) {
+  function getDateFromS3ObjectFileIndex(index: number): string {
     if (filesS3Keys.length > 0) {
       const s3ObjectKey = filesS3Keys[index];
-      return s3ObjectKey.match(dateRegExp)![0];
+      const match = s3ObjectKey.match(dateRegExp)
+      return match ? match[0] : "";
     } else {
       return "";
     }
@@ -181,18 +198,20 @@ function App() {
           variant="text"
           startIcon={isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
           onClick={() => handlePlayPause(!isPlaying)}
-        >
-          {valuetext(currentIndex)}
-        </Button>
-        <Slider
-          style={{ color: "white", opacity: "70%" }}
-          className="slider"
-          value={currentIndex}
-          onChange={(_event, index) => handleChangeDate(index)}
-          step={1}
-          min={0}
-          max={filesS3Keys.length - 1}
         />
+        <Tooltip enterTouchDelay={0} placement="auto" title={getDateFromS3ObjectFileIndex(currentIndex)}>
+          <Slider
+            valueLabelDisplay="on"
+            valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
+            style={{ color: "white", opacity: "70%" }}
+            className="slider"
+            value={currentIndex}
+            onChange={(_event, index) => handleChangeDate(index)}
+            step={1}
+            min={0}
+            max={filesS3Keys.length - 1}
+          />
+        </Tooltip>
       </Box>
     </div>
   );
