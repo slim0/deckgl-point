@@ -5,10 +5,11 @@ import { Box, Button, Slider } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useReducer, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
 import "./App.css";
+import { reducer } from "./reducer";
 import {
   getAnonymousS3Client,
   getObjectByteArray,
@@ -46,6 +47,16 @@ const fileRegExp = new RegExp(
   `^${S3_PREFIX}/04APR_CHL5D_6MFORECAST_norm-${dateRegExp}.feather$`,
 );
 
+export type State = {
+  table: arrow.Table | undefined;
+  isPlaying: boolean;
+  filesS3Keys: string[];
+  currentIndex: number;
+  error?: string;
+};
+
+
+
 function App() {
   const onClick = (info: PickingInfo) => {
     if (info.object) {
@@ -53,11 +64,32 @@ function App() {
     }
   };
 
-  const [table, setTable] = useState<arrow.Table | undefined>(undefined);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [s3ObjectKeys, setS3ObjectKeys] = useState<string[]>([]);
-  const [s3ObjectCurrentIndex, setS3ObjectCurrentIndex] = useState<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const initialState: State = {
+    table: undefined,
+    isPlaying: false,
+    filesS3Keys: [],
+    currentIndex: 0,
+  };
+
+  const [
+    { table, isPlaying, currentIndex, filesS3Keys, error },
+    dispatch,
+  ] = useReducer(reducer, initialState);
+  const intervalRef = useRef<NodeJS.Timeout>();
+
+  const fetchData = async () => {
+    const key = filesS3Keys[currentIndex];
+    try {
+      const data = await getObjectByteArray(s3Client, S3_BUCKET_NAME, key);
+      const table = arrow.tableFromIPC(data);
+      dispatch({ type: "tableFetched", result: table });
+    } catch (err) {
+      dispatch({
+        type: "failure",
+        error: `Failure while trying to fetch table for file: ${key}`,
+      });
+    }
+  };
 
   useEffect(() => {
     listObjectsWithPrefix(s3Client, S3_BUCKET_NAME, S3_PREFIX).then(
@@ -65,51 +97,34 @@ function App() {
         const filteredObjects = objects.filter((object) =>
           object.match(fileRegExp),
         );
-        setS3ObjectKeys(filteredObjects.sort());
+        dispatch({ type: "filesParsed", result: filteredObjects.sort() });
       },
     );
   }, []);
 
-  const handleChangeDate = (newIndex: number) => {
-    setS3ObjectCurrentIndex(newIndex);
+  const handleChangeDate = async (newIndex: number) => {
+    dispatch({ type: "dateChanged", result: newIndex });
   };
 
   const handlePlayPause = async (newValue: boolean) => {
-    setIsPlaying(newValue);
-  };
-
-  const startLoop = (index: number) => {
-    timeoutRef.current = setTimeout(() => {
-      let newIndex = index + 1;
-      if (newIndex < s3ObjectKeys.length) {
-        setS3ObjectCurrentIndex(newIndex);
-        startLoop(newIndex);
-      } else {
-        setIsPlaying(false); // stop animation at the end
-      }
-    }, ANIMATION_TIMEOUT);
+    dispatch({ type: "PlayButtonClicked", result: newValue });
   };
 
   useEffect(() => {
     if (isPlaying) {
-      startLoop(s3ObjectCurrentIndex);
+      intervalRef.current = setInterval(() => {
+        dispatch({ type: "dateChanged", result: currentIndex + 1 });
+      }, ANIMATION_TIMEOUT);
+    } else {
+      clearInterval(intervalRef.current);
     }
-    return () => clearTimeout(timeoutRef.current);
-  }, [isPlaying]);
+    return () => clearInterval(intervalRef.current);
+  }, [isPlaying, currentIndex]);
 
+    
   useEffect(() => {
-    const fetchData = async () => {
-      const key = s3ObjectKeys[s3ObjectCurrentIndex];
-      try {
-        const data = await getObjectByteArray(s3Client, S3_BUCKET_NAME, key);
-        const table = arrow.tableFromIPC(data);
-        setTable(table);
-      } catch (err) {
-        console.error(`Error fetching ${key}:`, err);
-      }
-    };
     fetchData();
-  }, [s3ObjectKeys, s3ObjectCurrentIndex]);
+  }, [filesS3Keys, currentIndex]);
 
   const layers: Layer[] = [];
 
@@ -136,8 +151,8 @@ function App() {
     );
 
   function valuetext(index: number) {
-    if (s3ObjectKeys.length > 0) {
-      const s3ObjectKey = s3ObjectKeys[index];
+    if (filesS3Keys.length > 0) {
+      const s3ObjectKey = filesS3Keys[index];
       return s3ObjectKey.match(dateRegExp)![0];
     } else {
       return "";
@@ -161,22 +176,22 @@ function App() {
       </DeckGL>
       <Box className="controller">
         <Button
-          style={{color: "white", opacity: "70%"}}
+          style={{ color: "white", opacity: "70%" }}
           className="play-button"
           variant="text"
           startIcon={isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
           onClick={() => handlePlayPause(!isPlaying)}
         >
-          {valuetext(s3ObjectCurrentIndex)}
+          {valuetext(currentIndex)}
         </Button>
         <Slider
-          style={{color: "white", opacity: "70%"}}
+          style={{ color: "white", opacity: "70%" }}
           className="slider"
-          value={s3ObjectCurrentIndex}
+          value={currentIndex}
           onChange={(_event, index) => handleChangeDate(index)}
           step={1}
           min={0}
-          max={s3ObjectKeys.length - 1}
+          max={filesS3Keys.length - 1}
         />
       </Box>
     </div>
