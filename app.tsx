@@ -1,7 +1,5 @@
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
-import PauseCircleIcon from "@mui/icons-material/PauseCircle";
-import PlayCircleIcon from "@mui/icons-material/PlayCircle";
-import { Box, Button, Slider, Tooltip } from "@mui/material";
+import { Box, Slider } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
@@ -191,14 +189,6 @@ function App() {
         <StaticMap mapStyle={MAP_STYLE} />
       </DeckGL>
       <Box className="controller">
-        <Button
-          style={{ color: "white", opacity: "70%" }}
-          className="play-button"
-          variant="text"
-          startIcon={isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
-          onClick={() => handlePlayPause(!isPlaying)}
-        />
-        <Tooltip enterTouchDelay={0} placement="auto" title={getDateFromS3ObjectFileIndex(currentIndex)}>
           <Slider
             valueLabelDisplay="on"
             valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
@@ -210,7 +200,6 @@ function App() {
             min={0}
             max={filesS3Keys.length - 1}
           />
-        </Tooltip>
       </Box>
     </div>
   );
