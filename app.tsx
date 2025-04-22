@@ -1,5 +1,7 @@
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
-import { Box, Slider } from "@mui/material";
+import PauseCircleIcon from "@mui/icons-material/PauseCircle";
+import PlayCircleIcon from "@mui/icons-material/PlayCircle";
+import { Box, Button, Slider } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
@@ -53,9 +55,12 @@ export type State = {
   error?: string;
 };
 
+type Props = {
+  showPlayButton?: boolean;
+};
 
-
-function App() {
+function App(props: Props) {
+  const { showPlayButton } = props;
   const onClick = (info: PickingInfo) => {
     if (info.object) {
       console.log(JSON.stringify(info.object.toJSON()));
@@ -69,10 +74,8 @@ function App() {
     currentIndex: 0,
   };
 
-  const [
-    { table, isPlaying, currentIndex, filesS3Keys, error },
-    dispatch,
-  ] = useReducer(reducer, initialState);
+  const [{ table, isPlaying, currentIndex, filesS3Keys, error }, dispatch] =
+    useReducer(reducer, initialState);
 
   const fetchData = async (index: number) => {
     const key = filesS3Keys[index];
@@ -110,7 +113,7 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
-  
+
     const runAnimation = async () => {
       while (!cancelled && isPlaying && currentIndex < filesS3Keys.length - 1) {
         await fetchData(currentIndex);
@@ -119,22 +122,21 @@ function App() {
         }
         await new Promise((resolve) => setTimeout(resolve, ANIMATION_TIMEOUT));
       }
-  
+
       if (currentIndex >= filesS3Keys.length - 1) {
         dispatch({ type: "PlayButtonClicked", result: false });
       }
     };
-  
+
     if (isPlaying) {
       runAnimation();
     }
-  
+
     return () => {
       cancelled = true;
     };
   }, [isPlaying, currentIndex, filesS3Keys]);
 
-    
   useEffect(() => {
     filesS3Keys.length > 0 && fetchData(currentIndex);
   }, [filesS3Keys]);
@@ -166,7 +168,7 @@ function App() {
   function getDateFromS3ObjectFileIndex(index: number): string {
     if (filesS3Keys.length > 0) {
       const s3ObjectKey = filesS3Keys[index];
-      const match = s3ObjectKey.match(dateRegExp)
+      const match = s3ObjectKey.match(dateRegExp);
       return match ? match[0] : "";
     } else {
       return "";
@@ -189,17 +191,27 @@ function App() {
         <StaticMap mapStyle={MAP_STYLE} />
       </DeckGL>
       <Box className="controller">
-          <Slider
-            valueLabelDisplay="on"
-            valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
+        {showPlayButton && (
+          <Button
             style={{ color: "white", opacity: "70%" }}
-            className="slider"
-            value={currentIndex}
-            onChange={(_event, index) => handleChangeDate(index)}
-            step={1}
-            min={0}
-            max={filesS3Keys.length - 1}
+            className="play-button"
+            variant="text"
+            startIcon={isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
+            onClick={() => handlePlayPause(!isPlaying)}
           />
+        )}
+
+        <Slider
+          valueLabelDisplay="on"
+          valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
+          style={{ color: "white", opacity: "70%" }}
+          className="slider"
+          value={currentIndex}
+          onChange={(_event, index) => handleChangeDate(index)}
+          step={1}
+          min={0}
+          max={filesS3Keys.length - 1}
+        />
       </Box>
     </div>
   );
