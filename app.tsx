@@ -39,7 +39,7 @@ const COLOR_GRADIENT = d3.scaleLinear([0, 1], [colorLow, colorHigh]);
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
 const MAP_STYLE =
-  "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json";
+  "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 
 // 04APR_CHL5D_6MFORECAST_norm-2025-04-01.feather
 const dateRegExp = "\\d{4}-\\d{2}-\\d{2}";
