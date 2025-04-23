@@ -34,7 +34,7 @@ const INITIAL_VIEW_STATE: MapViewState = {
 
 const colorLow = d3.color("rgba(247,252,253, 0)");
 const colorHigh = d3.color("rgba(0,109,44, 1)");
-const COLOR_GRADIENT = d3.scaleLog([0.05, 1], [colorLow, colorHigh]);
+const COLOR_GRADIENT = d3.scaleLog([0.01, 1], [colorLow, colorHigh]);
 
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
