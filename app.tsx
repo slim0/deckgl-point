@@ -151,7 +151,7 @@ function App(props: Props) {
     layers.push(
       new GeoArrowPolygonLayer({
         id: "geoarrow-polygons",
-        stroked: true,
+        stroked: false,
         filled: true,
         data: table,
         extruded: false,
