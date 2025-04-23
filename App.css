@@ -6,11 +6,12 @@
     left: 0;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .controller {
     display: flex;
-    width: 95%;
+    width: 90%;
     position: absolute;
     bottom: 0;
     margin-bottom: 20px;

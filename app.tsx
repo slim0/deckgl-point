@@ -1,7 +1,7 @@
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
-import { Box, Button, CircularProgress, Slider } from "@mui/material";
+import { Box, Button, CircularProgress, circularProgressClasses, CircularProgressProps, Slider } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
@@ -162,9 +162,9 @@ function App(props: Props) {
         getFillColor: ({ index, data, target }) => {
           const recordBatch = data.data;
           const row = recordBatch.get(index)!;
-          const rowChlValue = row["CHL"]
-          const color = d3.color(COLOR_GRADIENT(rowChlValue)!).rgb()
-          return [color.r, color.g, color.b, color.opacity * 255]
+          const rowChlValue = row["CHL"];
+          const color = d3.color(COLOR_GRADIENT(rowChlValue)!).rgb();
+          return [color.r, color.g, color.b, color.opacity * 255];
         },
         _normalize: false,
       }),
@@ -178,6 +178,40 @@ function App(props: Props) {
     } else {
       return "";
     }
+  }
+
+  function CustomCircularProgress(props: CircularProgressProps) {
+    return (
+      <Box sx={{ position: 'relative' }}>
+        <CircularProgress
+          variant="determinate"
+          sx={(theme) => ({
+            color: theme.palette.grey[200]
+          })}
+          size={40}
+          thickness={4}
+          {...props}
+          value={100}
+        />
+        <CircularProgress
+          variant="indeterminate"
+          disableShrink
+          sx={() => ({
+            color: '#2B7A44',
+            animationDuration: '550ms',
+            position: 'absolute',
+            left: 0,
+            [`& .${circularProgressClasses.circle}`]: {
+              strokeLinecap: 'round',
+            },
+
+          })}
+          size={40}
+          thickness={4}
+          {...props}
+        />
+      </Box>
+    );
   }
 
   return (
@@ -195,6 +229,11 @@ function App(props: Props) {
       >
         <StaticMap mapStyle={MAP_STYLE} />
       </DeckGL>
+      {fetchingData.current && (
+        <Box sx={{ display: "flex" }}>
+          <CustomCircularProgress/>
+        </Box>
+      )}
       <Box className="controller">
         {showPlayButton && (
           <Button
@@ -204,11 +243,6 @@ function App(props: Props) {
             startIcon={isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
             onClick={() => handlePlayPause(!isPlaying)}
           />
-        )}
-        {fetchingData.current && (
-          <Box sx={{ display: "flex" }}>
-            <CircularProgress />
-          </Box>
         )}
         <Slider
           valueLabelDisplay="on"
@@ -221,6 +255,7 @@ function App(props: Props) {
           min={0}
           max={filesS3Keys.length - 1}
         />
+        
       </Box>
     </div>
   );
