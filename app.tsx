@@ -19,7 +19,7 @@ import {
 const S3_ENDPOINT = "https://minio.dive.edito.eu";
 const S3_REGION = "waw3-1";
 const S3_BUCKET_NAME = "project-chlorophyll";
-const S3_PREFIX = "TESTS_SIMON";
+const S3_PREFIX = "PER_DAY_FEATHER_FILES";
 
 const ANIMATION_TIMEOUT = 2000;
 
