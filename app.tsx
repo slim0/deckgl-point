@@ -1,11 +1,11 @@
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
-import { Box, Button, Slider } from "@mui/material";
+import { Box, Button, CircularProgress, Slider } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
 import "./App.css";
@@ -32,14 +32,14 @@ const INITIAL_VIEW_STATE: MapViewState = {
   minZoom: 2,
 };
 
-const colorLow = d3.color("#2C353B");
-const colorHigh = d3.color("#5FD490");
-const COLOR_GRADIENT = d3.scaleLinear([0, 1], [colorLow, colorHigh]);
+const colorLow = d3.color("rgba(247,252,253, 0)");
+const colorHigh = d3.color("rgba(0,109,44, 1)");
+const COLOR_GRADIENT = d3.scaleLog([0.05, 1], [colorLow, colorHigh]);
 
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
 const MAP_STYLE =
-  "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+  "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 // 04APR_CHL5D_6MFORECAST_norm-2025-04-01.feather
 const dateRegExp = "\\d{4}-\\d{2}-\\d{2}";
@@ -77,12 +77,16 @@ function App(props: Props) {
   const [{ table, isPlaying, currentIndex, filesS3Keys, error }, dispatch] =
     useReducer(reducer, initialState);
 
+  const fetchingData = useRef<boolean>(false);
+
   const fetchData = async (index: number) => {
+    fetchingData.current = true;
     const key = filesS3Keys[index];
     try {
       const data = await getObjectByteArray(s3Client, S3_BUCKET_NAME, key);
       const table = arrow.tableFromIPC(data);
       dispatch({ type: "tableFetched", result: table });
+      fetchingData.current = false;
     } catch (err) {
       dispatch({
         type: "failure",
@@ -158,8 +162,9 @@ function App(props: Props) {
         getFillColor: ({ index, data, target }) => {
           const recordBatch = data.data;
           const row = recordBatch.get(index)!;
-          const color = d3.color(COLOR_GRADIENT(row["CHL"])!).rgb();
-          return [color.r, color.g, color.b];
+          const rowChlValue = row["CHL"]
+          const color = d3.color(COLOR_GRADIENT(rowChlValue)!).rgb()
+          return [color.r, color.g, color.b, color.opacity * 255]
         },
         _normalize: false,
       }),
@@ -200,7 +205,11 @@ function App(props: Props) {
             onClick={() => handlePlayPause(!isPlaying)}
           />
         )}
-
+        {fetchingData.current && (
+          <Box sx={{ display: "flex" }}>
+            <CircularProgress />
+          </Box>
+        )}
         <Slider
           valueLabelDisplay="on"
           valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
