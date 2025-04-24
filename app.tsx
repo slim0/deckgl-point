@@ -9,9 +9,12 @@ import {
   CircularProgress,
   circularProgressClasses,
   CircularProgressProps,
+  createTheme,
   IconButton,
   Slider,
+  ThemeProvider,
   Tooltip,
+  useTheme
 } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
@@ -78,6 +81,8 @@ function App(props: Props) {
   } = props;
   const { s3Client, s3Bucket, s3Prefix } = s3Info;
 
+  const theme = useTheme()
+  
   const colorHigh = d3.color(
     `rgba(${polygonColor[0]},${polygonColor[1]},${polygonColor[2]}, 1)`,
   );
@@ -276,7 +281,7 @@ function App(props: Props) {
       )}
       <Box className="header">
         <img src={MercatorLogo} alt="Mercator" />
-        <div className="application-title">{applicationTitle}</div>
+        <Box className="application-title" color={theme.palette.primary.main}>{applicationTitle}</Box>
       </Box>
       <Box className="download-file-button">
         <Tooltip title="Download source data file" placement="left">
@@ -288,7 +293,8 @@ function App(props: Props) {
       <Box className="controller">
         {animationTimer && (
           <Button
-            style={{ color: "white", opacity: "70%" }}
+            color="primary"
+            style={{ opacity: "70%", marginRight: "25px" }}
             className="play-button"
             variant="text"
             startIcon={isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
@@ -327,19 +333,33 @@ const sourceDataFileDownloadUrl =
 
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1B2F58',
+    },
+    secondary: {
+      main: "#80C5DE",
+    },
+  },
+});
+
 /* global document */
 const container = document.body.appendChild(document.createElement("div"));
 createRoot(container).render(
-  <App
-    applicationTitle="Chlorophyll AI forecast"
-    s3Info={{
-      s3Client,
-      s3Bucket: S3_BUCKET,
-      s3Prefix: S3_PREFIX,
-    }}
-    featherFileRegExp={featherFileRegExp}
-    dateRegExpInFile={dateRegExpInFile}
-    polygonColor={[0, 109, 44]}
-    sourceDataFileDownloadUrl={sourceDataFileDownloadUrl}
-  />,
+  <ThemeProvider theme={theme}>
+    <App
+      applicationTitle="Chlorophyll AI forecast"
+      s3Info={{
+        s3Client,
+        s3Bucket: S3_BUCKET,
+        s3Prefix: S3_PREFIX,
+      }}
+      featherFileRegExp={featherFileRegExp}
+      dateRegExpInFile={dateRegExpInFile}
+      polygonColor={[0, 109, 44]}
+      sourceDataFileDownloadUrl={sourceDataFileDownloadUrl}
+    />,
+  </ThemeProvider>
 );
