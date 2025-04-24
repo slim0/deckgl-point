@@ -292,7 +292,8 @@ function App(props: Props) {
         <Slider
           valueLabelDisplay="on"
           valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
-          style={{ color: "white", opacity: "70%" }}
+          style={{ opacity: "80%" }}
+          color="primary"
           className="slider"
           value={currentIndex}
           onChange={(_event, index) => handleChangeDate(index)}
