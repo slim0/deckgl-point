@@ -1,6 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import {
@@ -11,6 +11,7 @@ import {
   CircularProgressProps,
   IconButton,
   Slider,
+  Tooltip,
 } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
@@ -19,7 +20,7 @@ import React, { useEffect, useReducer, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
 import "./App.css";
-import MercatorLogo from './img/MOi_rectangle-transparentbackground-color.png';
+import MercatorLogo from "./img/MOi_rectangle-transparentbackground-color.png";
 import { reducer } from "./reducer";
 import {
   getAnonymousS3Client,
@@ -73,7 +74,7 @@ function App(props: Props) {
     dateRegExpInFile,
     polygonColor,
     sourceDataFileDownloadUrl,
-    applicationTitle
+    applicationTitle,
   } = props;
   const { s3Client, s3Bucket, s3Prefix } = s3Info;
 
@@ -275,14 +276,14 @@ function App(props: Props) {
       )}
       <Box className="header">
         <img src={MercatorLogo} alt="Mercator" />
-        <div className="application-title">
-          {applicationTitle}
-        </div>
+        <div className="application-title">{applicationTitle}</div>
       </Box>
       <Box className="download-file-button">
-        <IconButton color="primary" href={sourceDataFileDownloadUrl} download>
-          <CloudDownloadIcon />
-        </IconButton>
+        <Tooltip title="Download source data file" placement="left">
+          <IconButton color="primary" href={sourceDataFileDownloadUrl} download>
+            <CloudDownloadIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
       <Box className="controller">
         {animationTimer && (

@@ -1,6 +1,6 @@
 
 .my-app {
-    font-family: "Gill Sans Extrabold", sans-serif;
+    font-family: sans-serif;
     height: 100%;
     width: 100%;
     position: absolute; 
@@ -44,7 +44,8 @@
 }
 
 .header .application-title {
-    padding-top: 13px;
+    padding-top: 11px;
+    color: #1B2F58;
     font-size: large;
 }
 
