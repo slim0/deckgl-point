@@ -1,7 +1,15 @@
+import { S3Client } from "@aws-sdk/client-s3";
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
-import { Box, Button, CircularProgress, circularProgressClasses, CircularProgressProps, Slider } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  circularProgressClasses,
+  CircularProgressProps,
+  Slider,
+} from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
 import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
@@ -16,13 +24,6 @@ import {
   listObjectsWithPrefix,
 } from "./s3";
 
-const S3_ENDPOINT = "https://minio.dive.edito.eu";
-const S3_REGION = "waw3-1";
-const S3_BUCKET_NAME = "project-chlorophyll";
-const S3_PREFIX = "PER_DAY_FEATHER_FILES";
-
-const ANIMATION_TIMEOUT = 2000;
-
 const INITIAL_VIEW_STATE: MapViewState = {
   latitude: 20,
   longitude: 0,
@@ -32,20 +33,12 @@ const INITIAL_VIEW_STATE: MapViewState = {
   minZoom: 2,
 };
 
-const colorLow = d3.color("rgba(247,252,253, 0)");
-const colorHigh = d3.color("rgba(0,109,44, 1)");
-const COLOR_GRADIENT = d3.scaleLog([0.01, 1], [colorLow, colorHigh]);
+type RGB = [number, number, number]
 
-const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
+const COLOR_LOW = d3.color("rgba(0,0,0, 0)");
 
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
-
-// 04APR_CHL5D_6MFORECAST_norm-2025-04-01.feather
-const dateRegExp = "\\d{4}-\\d{2}-\\d{2}";
-const fileRegExp = new RegExp(
-  `^${S3_PREFIX}/04APR_CHL5D_6MFORECAST_norm-${dateRegExp}.feather$`,
-);
 
 export type State = {
   table: arrow.Table | undefined;
@@ -56,11 +49,24 @@ export type State = {
 };
 
 type Props = {
-  showPlayButton?: boolean;
+  animationTimer?: number;
+  s3Info: {
+    s3Client: S3Client;
+    s3Bucket: string;
+    s3Prefix?: string;
+  };
+  featherFileRegExp: RegExp;
+  dateRegExpInFile: RegExp;
+  polygonColor: RGB
 };
 
 function App(props: Props) {
-  const { showPlayButton } = props;
+  const { s3Info, animationTimer, featherFileRegExp, dateRegExpInFile, polygonColor } = props;
+  const { s3Client, s3Bucket, s3Prefix } = s3Info;
+
+  const colorHigh = d3.color(`rgba(${polygonColor[0]},${polygonColor[1]},${polygonColor[2]}, 1)`);
+  const colorGradient = d3.scaleLog([0.01, 1], [COLOR_LOW, colorHigh]);
+
   const onClick = (info: PickingInfo) => {
     if (info.object) {
       console.log(JSON.stringify(info.object.toJSON()));
@@ -83,7 +89,7 @@ function App(props: Props) {
     fetchingData.current = true;
     const key = filesS3Keys[index];
     try {
-      const data = await getObjectByteArray(s3Client, S3_BUCKET_NAME, key);
+      const data = await getObjectByteArray(s3Client, s3Bucket, key);
       const table = arrow.tableFromIPC(data);
       dispatch({ type: "tableFetched", result: table });
       fetchingData.current = false;
@@ -96,10 +102,10 @@ function App(props: Props) {
   };
 
   useEffect(() => {
-    listObjectsWithPrefix(s3Client, S3_BUCKET_NAME, S3_PREFIX).then(
+    listObjectsWithPrefix(s3Client, s3Bucket, s3Prefix).then(
       async (objects) => {
         const filteredObjects = objects.filter((object) =>
-          object.match(fileRegExp),
+          object.match(featherFileRegExp),
         );
         dispatch({ type: "filesParsed", result: filteredObjects.sort() });
       },
@@ -116,29 +122,34 @@ function App(props: Props) {
   };
 
   useEffect(() => {
-    let cancelled = false;
+    if (animationTimer !== undefined) {
+      let cancelled = false;
 
-    const runAnimation = async () => {
-      while (!cancelled && isPlaying && currentIndex < filesS3Keys.length - 1) {
-        await fetchData(currentIndex);
-        if (!cancelled) {
-          dispatch({ type: "dateChanged", result: currentIndex + 1 });
+      const runAnimation = async () => {
+        while (
+          !cancelled &&
+          isPlaying &&
+          currentIndex < filesS3Keys.length - 1
+        ) {
+          await fetchData(currentIndex);
+          if (!cancelled) {
+            dispatch({ type: "dateChanged", result: currentIndex + 1 });
+          }
+          await new Promise((resolve) => setTimeout(resolve, animationTimer));
         }
-        await new Promise((resolve) => setTimeout(resolve, ANIMATION_TIMEOUT));
-      }
 
-      if (currentIndex >= filesS3Keys.length - 1) {
-        dispatch({ type: "PlayButtonClicked", result: false });
-      }
-    };
+        if (currentIndex >= filesS3Keys.length - 1) {
+          dispatch({ type: "PlayButtonClicked", result: false });
+        }
+      };
 
-    if (isPlaying) {
-      runAnimation();
+      if (isPlaying) {
+        runAnimation();
+      }
+      return () => {
+        cancelled = true;
+      };
     }
-
-    return () => {
-      cancelled = true;
-    };
   }, [isPlaying, currentIndex, filesS3Keys]);
 
   useEffect(() => {
@@ -163,7 +174,7 @@ function App(props: Props) {
           const recordBatch = data.data;
           const row = recordBatch.get(index)!;
           const rowChlValue = row["CHL"];
-          const color = d3.color(COLOR_GRADIENT(rowChlValue)!).rgb();
+          const color = d3.color(colorGradient(rowChlValue)!).rgb();
           return [color.r, color.g, color.b, color.opacity * 255];
         },
         _normalize: false,
@@ -173,20 +184,29 @@ function App(props: Props) {
   function getDateFromS3ObjectFileIndex(index: number): string {
     if (filesS3Keys.length > 0) {
       const s3ObjectKey = filesS3Keys[index];
-      const match = s3ObjectKey.match(dateRegExp);
+      const match = s3ObjectKey.match(dateRegExpInFile);
       return match ? match[0] : "";
     } else {
       return "";
     }
   }
 
+  function componentToHex(RgbColorComponent: number): string {
+    var hex = RgbColorComponent.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+  }
+  
+  function rgbToHex(RgbColor: RGB): string {
+    return "#" + componentToHex(RgbColor[0]) + componentToHex(RgbColor[1]) + componentToHex(RgbColor[2]);
+  }
+
   function CustomCircularProgress(props: CircularProgressProps) {
     return (
-      <Box sx={{ position: 'relative' }}>
+      <Box sx={{ position: "relative" }}>
         <CircularProgress
           variant="determinate"
           sx={(theme) => ({
-            color: theme.palette.grey[200]
+            color: theme.palette.grey[200],
           })}
           size={40}
           thickness={4}
@@ -197,14 +217,13 @@ function App(props: Props) {
           variant="indeterminate"
           disableShrink
           sx={() => ({
-            color: '#2B7A44',
-            animationDuration: '550ms',
-            position: 'absolute',
+            color: rgbToHex(polygonColor),
+            animationDuration: "550ms",
+            position: "absolute",
             left: 0,
             [`& .${circularProgressClasses.circle}`]: {
-              strokeLinecap: 'round',
+              strokeLinecap: "round",
             },
-
           })}
           size={40}
           thickness={4}
@@ -231,11 +250,11 @@ function App(props: Props) {
       </DeckGL>
       {fetchingData.current && (
         <Box sx={{ display: "flex" }}>
-          <CustomCircularProgress/>
+          <CustomCircularProgress />
         </Box>
       )}
       <Box className="controller">
-        {showPlayButton && (
+        {animationTimer && (
           <Button
             style={{ color: "white", opacity: "70%" }}
             className="play-button"
@@ -255,12 +274,34 @@ function App(props: Props) {
           min={0}
           max={filesS3Keys.length - 1}
         />
-        
       </Box>
     </div>
   );
 }
 
+const S3_ENDPOINT = "https://minio.dive.edito.eu";
+const S3_REGION = "waw3-1";
+const S3_BUCKET = "project-chlorophyll";
+const S3_PREFIX = "PER_DAY_FEATHER_FILES";
+
+const dateRegExpInFile = new RegExp("\\d{4}-\\d{2}-\\d{2}");
+const featherFileRegExp = new RegExp(
+  `^${S3_PREFIX}/04APR_CHL5D_6MFORECAST_norm-${dateRegExpInFile.source}.feather$`,
+);
+
+const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
+
 /* global document */
 const container = document.body.appendChild(document.createElement("div"));
-createRoot(container).render(<App />);
+createRoot(container).render(
+  <App
+    s3Info={{
+      s3Client,
+      s3Bucket: S3_BUCKET,
+      s3Prefix: S3_PREFIX
+    }}
+    featherFileRegExp={featherFileRegExp}
+    dateRegExpInFile={dateRegExpInFile}
+    polygonColor={[0,109,44]}
+  />,
+);

@@ -16,7 +16,7 @@ export function getAnonymousS3Client(endpoint: string, region: string): S3Client
 export async function listObjectsWithPrefix(
   s3Client: S3Client,
   bucketName: string,
-  prefix: string,
+  prefix?: string,
 ): Promise<string[]> {
   const objects: string[] = []
   try {
