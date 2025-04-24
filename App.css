@@ -19,6 +19,15 @@
     align-items: center;
 }
 
+.downloadFileButton {
+    display: flex;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-top: 20px;
+    margin-right: 20px;
+}
+
 .play-button {
     align-self: flex-start;
 }

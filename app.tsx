@@ -1,5 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import {
@@ -8,6 +9,7 @@ import {
   CircularProgress,
   circularProgressClasses,
   CircularProgressProps,
+  IconButton,
   Slider,
 } from "@mui/material";
 import * as arrow from "apache-arrow";
@@ -33,7 +35,7 @@ const INITIAL_VIEW_STATE: MapViewState = {
   minZoom: 2,
 };
 
-type RGB = [number, number, number]
+type RGB = [number, number, number];
 
 const COLOR_LOW = d3.color("rgba(0,0,0, 0)");
 
@@ -57,14 +59,24 @@ type Props = {
   };
   featherFileRegExp: RegExp;
   dateRegExpInFile: RegExp;
-  polygonColor: RGB
+  polygonColor: RGB;
+  sourceDataFileDownloadUrl: string;
 };
 
 function App(props: Props) {
-  const { s3Info, animationTimer, featherFileRegExp, dateRegExpInFile, polygonColor } = props;
+  const {
+    s3Info,
+    animationTimer,
+    featherFileRegExp,
+    dateRegExpInFile,
+    polygonColor,
+    sourceDataFileDownloadUrl,
+  } = props;
   const { s3Client, s3Bucket, s3Prefix } = s3Info;
 
-  const colorHigh = d3.color(`rgba(${polygonColor[0]},${polygonColor[1]},${polygonColor[2]}, 1)`);
+  const colorHigh = d3.color(
+    `rgba(${polygonColor[0]},${polygonColor[1]},${polygonColor[2]}, 1)`,
+  );
   const colorGradient = d3.scaleLog([0.01, 1], [COLOR_LOW, colorHigh]);
 
   const onClick = (info: PickingInfo) => {
@@ -195,9 +207,14 @@ function App(props: Props) {
     var hex = RgbColorComponent.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
   }
-  
+
   function rgbToHex(RgbColor: RGB): string {
-    return "#" + componentToHex(RgbColor[0]) + componentToHex(RgbColor[1]) + componentToHex(RgbColor[2]);
+    return (
+      "#" +
+      componentToHex(RgbColor[0]) +
+      componentToHex(RgbColor[1]) +
+      componentToHex(RgbColor[2])
+    );
   }
 
   function CustomCircularProgress(props: CircularProgressProps) {
@@ -253,6 +270,11 @@ function App(props: Props) {
           <CustomCircularProgress />
         </Box>
       )}
+      <Box className="downloadFileButton">
+        <IconButton color="primary" href={sourceDataFileDownloadUrl} download>
+          <CloudDownloadIcon />
+        </IconButton>
+      </Box>
       <Box className="controller">
         {animationTimer && (
           <Button
@@ -289,6 +311,9 @@ const featherFileRegExp = new RegExp(
   `^${S3_PREFIX}/04APR_CHL5D_6MFORECAST_norm-${dateRegExpInFile.source}.feather$`,
 );
 
+const sourceDataFileDownloadUrl =
+  "https://minio.dive.edito.eu/project-chlorophyll/04APR_CHL5D_6MFORECAST_norm.parquet";
+
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
 /* global document */
@@ -298,10 +323,11 @@ createRoot(container).render(
     s3Info={{
       s3Client,
       s3Bucket: S3_BUCKET,
-      s3Prefix: S3_PREFIX
+      s3Prefix: S3_PREFIX,
     }}
     featherFileRegExp={featherFileRegExp}
     dateRegExpInFile={dateRegExpInFile}
-    polygonColor={[0,109,44]}
+    polygonColor={[0, 109, 44]}
+    sourceDataFileDownloadUrl={sourceDataFileDownloadUrl}
   />,
 );
