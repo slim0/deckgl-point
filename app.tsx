@@ -19,6 +19,7 @@ import React, { useEffect, useReducer, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
 import "./App.css";
+import MercatorLogo from './img/MOi_rectangle-transparentbackground-color.png';
 import { reducer } from "./reducer";
 import {
   getAnonymousS3Client,
@@ -270,7 +271,10 @@ function App(props: Props) {
           <CustomCircularProgress />
         </Box>
       )}
-      <Box className="downloadFileButton">
+      <Box className="mercator-logo">
+        <img src={MercatorLogo} alt="Mercator" />
+      </Box>
+      <Box className="download-file-button">
         <IconButton color="primary" href={sourceDataFileDownloadUrl} download>
           <CloudDownloadIcon />
         </IconButton>

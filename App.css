@@ -19,13 +19,29 @@
     align-items: center;
 }
 
-.downloadFileButton {
+.download-file-button {
     display: flex;
     position: absolute;
     top: 0;
     right: 0;
     margin-top: 20px;
     margin-right: 20px;
+}
+
+.mercator-logo {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-left: 20px;
+    margin-top: 5px;
+    size: 5%;
+    height: 100px;
+}
+
+.mercator-logo img {
+    width: 100%;
+    height: auto;
 }
 
 .play-button {
