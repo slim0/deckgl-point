@@ -1,4 +1,6 @@
+
 .my-app {
+    font-family: "Gill Sans Extrabold", sans-serif;
     height: 100%;
     width: 100%;
     position: absolute; 
@@ -28,20 +30,22 @@
     margin-right: 20px;
 }
 
-.mercator-logo {
+.header {
     display: flex;
     position: absolute;
     top: 0;
     left: 0;
     margin-left: 20px;
     margin-top: 5px;
-    size: 5%;
-    height: 100px;
 }
 
-.mercator-logo img {
-    width: 100%;
-    height: auto;
+.header img {
+    width: 200px;
+}
+
+.header .application-title {
+    padding-top: 13px;
+    font-size: large;
 }
 
 .play-button {

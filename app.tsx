@@ -52,6 +52,7 @@ export type State = {
 };
 
 type Props = {
+  applicationTitle: string;
   animationTimer?: number;
   s3Info: {
     s3Client: S3Client;
@@ -72,6 +73,7 @@ function App(props: Props) {
     dateRegExpInFile,
     polygonColor,
     sourceDataFileDownloadUrl,
+    applicationTitle
   } = props;
   const { s3Client, s3Bucket, s3Prefix } = s3Info;
 
@@ -271,8 +273,11 @@ function App(props: Props) {
           <CustomCircularProgress />
         </Box>
       )}
-      <Box className="mercator-logo">
+      <Box className="header">
         <img src={MercatorLogo} alt="Mercator" />
+        <div className="application-title">
+          {applicationTitle}
+        </div>
       </Box>
       <Box className="download-file-button">
         <IconButton color="primary" href={sourceDataFileDownloadUrl} download>
@@ -325,6 +330,7 @@ const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 const container = document.body.appendChild(document.createElement("div"));
 createRoot(container).render(
   <App
+    applicationTitle="Chlorophyll AI forecast"
     s3Info={{
       s3Client,
       s3Bucket: S3_BUCKET,
