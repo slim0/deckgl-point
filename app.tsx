@@ -135,6 +135,9 @@ function App(props: Props) {
 
   const handleChangeDate = async (newIndex: number) => {
     dispatch({ type: "dateChanged", result: newIndex });
+  };
+
+  const handleChangeDateCommitted = async (newIndex: number) => {
     await fetchData(newIndex);
   };
 
@@ -309,6 +312,7 @@ function App(props: Props) {
           className="slider"
           value={currentIndex}
           onChange={(_event, index) => handleChangeDate(index)}
+          onChangeCommitted={(_event, index) => handleChangeDateCommitted(index)}
           step={1}
           min={0}
           max={filesS3Keys.length - 1}
