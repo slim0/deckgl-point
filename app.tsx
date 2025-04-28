@@ -23,7 +23,9 @@ import React, { useEffect, useReducer, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
 import "./App.css";
+import { ColorRamp, RGB, rgba2hex } from "./common";
 import MercatorLogo from "./img/MOi_rectangle-transparentbackground-color.png";
+import { Legend } from "./Legend";
 import { reducer } from "./reducer";
 import {
   getAnonymousS3Client,
@@ -40,9 +42,11 @@ const INITIAL_VIEW_STATE: MapViewState = {
   minZoom: 2,
 };
 
-type RGB = [number, number, number];
+const COLOR_LOW_RGB: RGB = {r: 0, g: 0, b: 0, opacity: 0}
 
-const COLOR_LOW = d3.color("rgba(0,0,0, 0)");
+const COLOR_LOW = d3.color(
+  `rgba(${COLOR_LOW_RGB.r},${COLOR_LOW_RGB.g},${COLOR_LOW_RGB.b},${COLOR_LOW_RGB.opacity})`,
+);
 
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
@@ -80,13 +84,38 @@ function App(props: Props) {
     applicationTitle,
   } = props;
   const { s3Client, s3Bucket, s3Prefix } = s3Info;
-
   const theme = useTheme()
   
   const colorHigh = d3.color(
-    `rgba(${polygonColor[0]},${polygonColor[1]},${polygonColor[2]}, 1)`,
+    `rgba(${polygonColor.r},${polygonColor.g},${polygonColor.b},${polygonColor.opacity})`,
   );
-  const colorGradient = d3.scaleLog([0.01, 1], [COLOR_LOW, colorHigh]);
+
+  const colorRamp: ColorRamp = {
+    minValue: 0.01,
+    minColor: COLOR_LOW_RGB,
+    maxValue: 1,
+    maxColor: polygonColor,
+  }
+  const colorGradient = d3.scaleLog([colorRamp.minValue, colorRamp.maxValue], [COLOR_LOW, colorHigh]);
+
+  const legendStops = [
+    {
+      value: 0.05,
+      color: d3.color(colorGradient(0.05)!).toString()
+    },
+    {
+      value: 0.2,
+      color: d3.color(colorGradient(0.2)!).toString()
+    },
+    {
+      value: 0.5,
+      color: d3.color(colorGradient(0.5)!).toString()
+    },
+    {
+      value:(1),
+      color: d3.color(colorGradient(1)!).toString()
+    }
+  ]
 
   const onClick = (info: PickingInfo) => {
     if (info.object) {
@@ -212,19 +241,6 @@ function App(props: Props) {
     }
   }
 
-  function componentToHex(RgbColorComponent: number): string {
-    var hex = RgbColorComponent.toString(16);
-    return hex.length == 1 ? "0" + hex : hex;
-  }
-
-  function rgbToHex(RgbColor: RGB): string {
-    return (
-      "#" +
-      componentToHex(RgbColor[0]) +
-      componentToHex(RgbColor[1]) +
-      componentToHex(RgbColor[2])
-    );
-  }
 
   function CustomCircularProgress(props: CircularProgressProps) {
     return (
@@ -243,7 +259,7 @@ function App(props: Props) {
           variant="indeterminate"
           disableShrink
           sx={() => ({
-            color: rgbToHex(polygonColor),
+            color: rgba2hex(polygonColor),
             animationDuration: "550ms",
             position: "absolute",
             left: 0,
@@ -301,18 +317,21 @@ function App(props: Props) {
             onClick={() => handlePlayPause(!isPlaying)}
           />
         )}
-        <Slider
-          valueLabelDisplay="on"
-          valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
-          style={{ opacity: "80%" }}
-          color="primary"
-          className="slider"
-          value={currentIndex}
-          onChange={(_event, index) => handleChangeDate(index)}
-          step={1}
-          min={0}
-          max={filesS3Keys.length - 1}
-        />
+        <div style={{display: "flex", flexDirection: "column", width: '90%'}}>
+          <Legend legendStops={legendStops}></Legend>
+          <Slider
+            valueLabelDisplay="on"
+            valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
+            style={{ opacity: "80%" }}
+            color="primary"
+            className="slider"
+            value={currentIndex}
+            onChange={(_event, index) => handleChangeDate(index)}
+            step={1}
+            min={0}
+            max={filesS3Keys.length - 1}
+          />
+        </div>
       </Box>
     </div>
   );
@@ -358,7 +377,7 @@ createRoot(container).render(
       }}
       featherFileRegExp={featherFileRegExp}
       dateRegExpInFile={dateRegExpInFile}
-      polygonColor={[0, 109, 44]}
+      polygonColor={{r: 0, g: 109, b: 44, opacity: 1}}
       sourceDataFileDownloadUrl={sourceDataFileDownloadUrl}
     />,
   </ThemeProvider>
