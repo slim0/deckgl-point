@@ -15,6 +15,6 @@ if [ $returnValue -ne 0 ]; then
     npm install --global yarn
 fi
 
-yarn build
+yarn --cwd repository build
 
 popd > /dev/null
