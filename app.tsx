@@ -162,10 +162,11 @@ function App(props: Props) {
     );
   }, []);
 
-  const handleChangeDate = async (newIndex: number) => {
+  const handleChangeDate = async (newIndex: number, commited: boolean) => {
     dispatch({ type: "dateChanged", result: newIndex });
-    await fetchData(newIndex);
+    commited && await fetchData(newIndex);
   };
+
 
   const handlePlayPause = async (newValue: boolean) => {
     dispatch({ type: "PlayButtonClicked", result: newValue });
@@ -326,7 +327,9 @@ function App(props: Props) {
             color="primary"
             className="slider"
             value={currentIndex}
-            onChange={(_event, index) => handleChangeDate(index)}
+            marks
+            onChange={(_event, index) => handleChangeDate(index, false)}
+            onChangeCommitted={(_event, index) => handleChangeDate(index, true)}
             step={1}
             min={0}
             max={filesS3Keys.length - 1}

@@ -11,7 +11,6 @@ type Props = {
 
 export function Legend(props: Props) {
   const { legendStops } = props;
-  console.log("legendStops", legendStops)
   return (
     <div className="legend" style={{display: "flex"}}>
       {legendStops.map((legendStop) => (
