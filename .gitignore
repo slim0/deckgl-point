@@ -2,5 +2,5 @@ node_modules
 .vscode
 data
 .DS_Store
-!build/.keep
-build/dist
+!dist/.keep
+dist

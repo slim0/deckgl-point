@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "vite --open",
-    "build": "vite build --outDir build/dist"
+    "build": "vite build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",
