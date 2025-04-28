@@ -17,6 +17,7 @@ if [ $returnValue -ne 0 ]; then
     echo "Yarn installed"
 fi
 
+yarn --cwd /app/repository install
 yarn --cwd /app/repository build
 
 popd > /dev/null
