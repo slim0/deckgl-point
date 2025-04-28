@@ -372,7 +372,7 @@ const container = document.body.appendChild(document.createElement("div"));
 createRoot(container).render(
   <ThemeProvider theme={theme}>
     <App
-      applicationTitle="Chlorophyll AI forecast"
+      applicationTitle="Surface Chlorophyll-a Seasonal Forecast (Machine Learning Based)"
       s3Info={{
         s3Client,
         s3Bucket: S3_BUCKET,
