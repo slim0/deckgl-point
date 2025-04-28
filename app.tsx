@@ -318,12 +318,12 @@ function App(props: Props) {
             onClick={() => handlePlayPause(!isPlaying)}
           />
         )}
-        <div style={{display: "flex", flexDirection: "column", width: '90%'}}>
-          <Legend legendStops={legendStops}></Legend>
+        <div style={{display: "flex", flexDirection: "row", width: '90%', alignItems: "center"}}>
+          <Legend title={"Chl-a surface coverage (normalized concentration)"} legendStops={legendStops}></Legend>
           <Slider
             valueLabelDisplay="on"
             valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
-            style={{ opacity: "80%" }}
+            style={{ opacity: "80%", marginLeft: "20px" }}
             color="primary"
             className="slider"
             value={currentIndex}
