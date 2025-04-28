@@ -13,7 +13,7 @@ if [ $returnValue -ne 0 ]; then
     echo "Node current version: `nvm current`"
     echo "NPM version: `npm -v`"
     echo "Install Yarn"
-    npm install yarn
+    npm install --global yarn
     echo "Yarn installed"
 fi
 
