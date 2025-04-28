@@ -9,10 +9,12 @@ if [ $returnValue -ne 0 ]; then
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
     \. "$HOME/.nvm/nvm.sh"
     nvm install 22
-    node -v
-    nvm current
-    npm -v
-    npm i yarn
+    echo "Node version: `node -v`"
+    echo "Node current version: `nvm current`"
+    echo "NPM version: `npm -v`"
+    echo "Install Yarn"
+    npm install yarn
+    echo "Yarn installed"
 fi
 
 yarn build
