@@ -27,15 +27,15 @@ export function Legend(props: Props) {
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div
               style={{
-                width: "30px",
+                width: "50px",
                 height: "20px",
                 background: legendStop.color,
-                marginRight: "20px",
+                color: "white",
+                textAlign: "center",
+                padding: "5px 10px 5px 10px",
                 marginBottom: "10px",
-                border: "1px solid black",
               }}
-            />
-            <span>{legendStop.value}</span>
+            >{legendStop.value}</div>
           </div>
         ))}
       </div>
