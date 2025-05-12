@@ -363,7 +363,7 @@ function App(props: Props) {
           style={{
             display: "flex",
             flexDirection: "row",
-            width: "90%",
+            width: "100%",
             alignItems: "center",
           }}
         >
