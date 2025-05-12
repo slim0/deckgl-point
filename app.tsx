@@ -28,9 +28,9 @@ import { StaticMap } from "react-map-gl";
 import "./App.css";
 import { ColorRamp, RGB, rgba2hex } from "./common";
 import { CustomCircularProgress } from "./Components/CircularProgress";
+import { Legend } from "./Components/Legend";
 import ApplicationInformation from "./img/applicationInformation.png";
 import MercatorLogo from "./img/MOi_rectangle-transparentbackground-color.png";
-import { Legend } from "./Legend";
 import {
   algalBloomFormation,
   PointOfInterest,
