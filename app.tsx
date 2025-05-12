@@ -266,7 +266,7 @@ function App(props: Props) {
     iconMapping:
       "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.json",
     getIcon: () => "marker",
-    getIconSize: 20,
+    getIconSize: 30,
     iconAlphaCutoff: 0,
     onClick: (layer) => {
       if (layer.object !== undefined) {
@@ -401,7 +401,7 @@ function App(props: Props) {
             style={{ display: "flex", alignItems: "center" }}
           >
             <img
-              style={{ width: "auto", height: "auto", maxWidth: "800px" }}
+              style={{ width: "auto", height: "auto", maxWidth: "800px", maxHeight: "400px" }}
               src={dialogContent && dialogContent.preview}
             ></img>
             <div style={{ marginLeft: "20px" }}>
