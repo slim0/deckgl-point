@@ -259,6 +259,12 @@ function App(props: Props) {
     pickable: true,
     stroked: false,
     filled: true,
+    pointType: "icon",
+    iconAtlas: "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png",
+    iconMapping: "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.json",
+    getIcon: () => 'marker',
+    getIconSize: 20,
+    iconAlphaCutoff: 0,
     onClick: (layer) => {
       if (layer.object !== undefined) {
         handleClickOpenDialog(layer.object);
