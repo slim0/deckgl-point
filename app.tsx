@@ -357,13 +357,14 @@ function App(props: Props) {
           }}
         >
           <Legend
-            title={"Chl-a surface coverage (normalized concentration)"}
+            title={"Chl-a surface coverage"}
+            subtitle={"normalized concentration"}
             legendStops={legendStops}
           ></Legend>
           <Slider
             valueLabelDisplay="on"
             valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
-            style={{ opacity: "80%", marginLeft: "20px" }}
+            style={{ opacity: "80%" }}
             color="primary"
             className="slider"
             value={currentIndex}

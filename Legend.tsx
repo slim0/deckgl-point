@@ -7,17 +7,24 @@ type LegendStop = {
 
 type Props = {
   legendStops: LegendStop[];
-  title: string
+  title: string;
+  subtitle: string;
 };
 
 export function Legend(props: Props) {
-  const { legendStops, title } = props;
+  const { legendStops, title, subtitle } = props;
   return (
-    <div className="legend" style={{display: "flex", flexDirection: "column", width: "500px"}}>
-      <div style={{marginBottom: "10px"}}>{title}</div>
-      <div style={{display: "flex"}} >
+    <div
+      className="legend"
+      style={{ display: "flex", flexDirection: "column", width: "500px" }}
+    >
+      <div style={{ fontWeight: "bold" }}>{title}</div>
+      <div style={{ marginBottom: "10px", fontStyle: "italic" }}>
+        {subtitle}
+      </div>
+      <div style={{ display: "flex" }}>
         {legendStops.map((legendStop) => (
-          <div style={{display: "flex", flexDirection: "column"}}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
             <div
               style={{
                 width: "30px",
@@ -25,7 +32,7 @@ export function Legend(props: Props) {
                 background: legendStop.color,
                 marginRight: "20px",
                 marginBottom: "10px",
-                border: "1px solid black"
+                border: "1px solid black",
               }}
             />
             <span>{legendStop.value}</span>
