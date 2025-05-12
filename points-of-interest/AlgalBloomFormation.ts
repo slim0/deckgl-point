@@ -3,7 +3,7 @@ import { Feature, Point } from "geojson";
 export type PointOfInterestProperties = {
     title: string,
     description: string
-    citation: string
+    citation: string | undefined
     preview: string
 }
 

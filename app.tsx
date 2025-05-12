@@ -1,6 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import InfoIcon from '@mui/icons-material/Info';
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import {
@@ -15,16 +16,11 @@ import {
   Slider,
   ThemeProvider,
   Tooltip,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
-import DeckGL, {
-  GeoJsonLayer,
-  Layer,
-  MapView,
-  MapViewState
-} from "deck.gl";
+import DeckGL, { GeoJsonLayer, Layer, MapView, MapViewState } from "deck.gl";
 import { FeatureCollection, Point } from "geojson";
 import React, { useEffect, useReducer, useRef } from "react";
 import { createRoot } from "react-dom/client";
@@ -32,12 +28,13 @@ import { StaticMap } from "react-map-gl";
 import "./App.css";
 import { ColorRamp, RGB, rgba2hex } from "./common";
 import { CustomCircularProgress } from "./Components/CircularProgress";
+import ApplicationInformation from "./img/applicationInformation.png";
 import MercatorLogo from "./img/MOi_rectangle-transparentbackground-color.png";
 import { Legend } from "./Legend";
 import {
   algalBloomFormation,
   PointOfInterest,
-  PointOfInterestProperties
+  PointOfInterestProperties,
 } from "./points-of-interest/AlgalBloomFormation";
 import { reducer } from "./reducer";
 import {
@@ -144,9 +141,17 @@ function App(props: Props) {
   const [{ table, isPlaying, currentIndex, filesS3Keys, error }, dispatch] =
     useReducer(reducer, initialState);
 
+  const ApplicationInformationDialogContent: PointOfInterestProperties = {
+    title: "Why seasonal forecasting?",
+    description:
+      "Chlorophyll offers a window into the health of our marine ecosystems. Because it is tied to algae and plant growth, tracking it can reveal early signs of problems like nutrient pollution, harmful algal blooms, or disruptions in fish habitats— all of which have direct economic and social consequences. Seasonal forecasts can provide advanced warnings of large-scale ecological changes driven by shifts in ocean conditions, such as warming waters or changes in nutrient cycles. This means the ability to make smarter, forward-looking decisions-whether it's safeguarding fisheries that support local jobs, protecting public health from toxic blooms, or planning coastal resilience strategies in a changing climate.",
+    preview: ApplicationInformation,
+    citation: undefined
+  };
+
   const [dialogContent, setDialogContent] = React.useState<
-  PointOfInterestProperties | undefined
-  >(undefined);
+    PointOfInterestProperties | undefined
+  >(ApplicationInformationDialogContent);
 
   const fetchingData = useRef<boolean>(false);
   //////////
@@ -199,7 +204,6 @@ function App(props: Props) {
   }, [filesS3Keys]);
   //////////
 
-
   const fetchData = async (index: number) => {
     fetchingData.current = true;
     const key = filesS3Keys[index];
@@ -226,8 +230,8 @@ function App(props: Props) {
     dispatch({ type: "PlayButtonClicked", result: newValue });
   };
 
-  const handleClickOpenDialog = (object: PointOfInterest) => {
-    setDialogContent(object.properties);
+  const handleClickOpenDialog = (dialogProperties: PointOfInterestProperties) => {
+    setDialogContent(dialogProperties);
   };
 
   const handleCloseDialog = () => {
@@ -245,10 +249,7 @@ function App(props: Props) {
     }
   }
 
-  const geojsonData: FeatureCollection<
-    Point,
-    PointOfInterestProperties
-  > = {
+  const geojsonData: FeatureCollection<Point, PointOfInterestProperties> = {
     type: "FeatureCollection",
     features: [algalBloomFormation],
   };
@@ -260,14 +261,16 @@ function App(props: Props) {
     stroked: false,
     filled: true,
     pointType: "icon",
-    iconAtlas: "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png",
-    iconMapping: "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.json",
-    getIcon: () => 'marker',
+    iconAtlas:
+      "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png",
+    iconMapping:
+      "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.json",
+    getIcon: () => "marker",
     getIconSize: 20,
     iconAlphaCutoff: 0,
     onClick: (layer) => {
       if (layer.object !== undefined) {
-        handleClickOpenDialog(layer.object);
+        handleClickOpenDialog(layer.object.properties);
       }
     },
     pointRadiusMinPixels: 5,
@@ -321,7 +324,9 @@ function App(props: Props) {
       </DeckGL>
       {fetchingData.current && (
         <Box sx={{ display: "flex" }}>
-          <CustomCircularProgress wheelHexadecimalColor={rgba2hex(polygonColor)}/>
+          <CustomCircularProgress
+            wheelHexadecimalColor={rgba2hex(polygonColor)}
+          />
         </Box>
       )}
       <Box className="header">
@@ -329,8 +334,14 @@ function App(props: Props) {
         <Box className="application-title" color={theme.palette.primary.main}>
           {applicationTitle}
         </Box>
+        
       </Box>
-      <Box className="download-file-button">
+      <Box className="download-file-button" style={{display: "flex", flexDirection: "column"}}>
+        <Tooltip title="Why seasonal forecasting?" placement="left" >
+          <IconButton color="primary" onClick={() => handleClickOpenDialog(ApplicationInformationDialogContent)} >
+            <InfoIcon />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Download source data file" placement="left">
           <IconButton color="primary" href={sourceDataFileDownloadUrl} download>
             <CloudDownloadIcon />
@@ -381,16 +392,16 @@ function App(props: Props) {
         open={dialogContent !== undefined}
         onClose={handleCloseDialog}
         fullWidth
-        maxWidth={"lg"}
+        maxWidth={"xl"}
       >
         <DialogTitle>{dialogContent && dialogContent.title}</DialogTitle>
         <DialogContent>
           <DialogContentText
             id="alert-dialog-description"
-            style={{ display: "flex" }}
+            style={{ display: "flex", alignItems: "center" }}
           >
             <img
-              style={{ width: "400px" }}
+              style={{ width: "auto", height: "auto", maxWidth: "800px" }}
               src={dialogContent && dialogContent.preview}
             ></img>
             <div style={{ marginLeft: "20px" }}>
