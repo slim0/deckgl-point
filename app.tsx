@@ -226,10 +226,8 @@ function App(props: Props) {
     dispatch({ type: "PlayButtonClicked", result: newValue });
   };
 
-  const handleClickOpenDialog = (object: any) => {
-    if (object && object.properties) {
-      setDialogContent(object.properties);
-    }
+  const handleClickOpenDialog = (object: PointOfInterest) => {
+    setDialogContent(object.properties);
   };
 
   const handleCloseDialog = () => {
@@ -255,18 +253,22 @@ function App(props: Props) {
     features: [algalBloomFormation],
   };
 
-  const geoJsonLayer = new GeoJsonLayer<PointOfInterest>({
+  const pointsOfInterestLayers = new GeoJsonLayer<PointOfInterest>({
     id: "GeoJsonLayer",
     data: geojsonData,
     pickable: true,
     stroked: false,
     filled: true,
-    onClick: () => console.log("test"),
+    onClick: (layer) => {
+      if (layer.object !== undefined) {
+        handleClickOpenDialog(layer.object);
+      }
+    },
     pointRadiusMinPixels: 5,
     getFillColor: [255, 0, 0, 255],
   });
 
-  const layers: Layer[] = [geoJsonLayer];
+  const layers: Layer[] = [pointsOfInterestLayers];
 
   table &&
     layers.push(
@@ -303,11 +305,6 @@ function App(props: Props) {
         getTooltip={(layer) =>
           layer.object && `${layer.object.properties.title}`
         }
-        onClick={(layer) => {
-          if (layer.object !== undefined) {
-            handleClickOpenDialog(layer.object);
-          }
-        }}
         views={
           new MapView({
             repeat: true,
