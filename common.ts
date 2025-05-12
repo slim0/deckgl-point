@@ -1,6 +1,6 @@
 export type RGB = { r: number; g: number; b: number; opacity: number };
 
-export function rgba2hex(RgbColor: RGB) {
+export function rgba2hex(RgbColor: RGB): string {
   const redHex = RgbColor.r.toString(16).padStart(2, "0");
   const greenHex = RgbColor.g.toString(16).padStart(2, "0");
   const blueHex = RgbColor.b.toString(16).padStart(2, "0");

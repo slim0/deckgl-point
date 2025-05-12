@@ -6,9 +6,6 @@ import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import {
   Box,
   Button,
-  CircularProgress,
-  circularProgressClasses,
-  CircularProgressProps,
   createTheme,
   Dialog,
   DialogContent,
@@ -18,7 +15,7 @@ import {
   Slider,
   ThemeProvider,
   Tooltip,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
@@ -26,8 +23,7 @@ import DeckGL, {
   GeoJsonLayer,
   Layer,
   MapView,
-  MapViewState,
-  PickingInfo,
+  MapViewState
 } from "deck.gl";
 import { FeatureCollection, Point } from "geojson";
 import React, { useEffect, useReducer, useRef } from "react";
@@ -35,12 +31,13 @@ import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
 import "./App.css";
 import { ColorRamp, RGB, rgba2hex } from "./common";
+import { CustomCircularProgress } from "./Components/CircularProgress";
 import MercatorLogo from "./img/MOi_rectangle-transparentbackground-color.png";
 import { Legend } from "./Legend";
 import {
   algalBloomFormation,
-  PointOfInterestGeoJsonFeature,
-  PointOfInterestGeoJsonProperties,
+  PointOfInterest,
+  PointOfInterestProperties
 } from "./points-of-interest/AlgalBloomFormation";
 import { reducer } from "./reducer";
 import {
@@ -136,12 +133,6 @@ function App(props: Props) {
     },
   ];
 
-  const onClick = (info: PickingInfo) => {
-    if (info.object) {
-      console.log(JSON.stringify(info.object.toJSON()));
-    }
-  };
-
   const initialState: State = {
     table: undefined,
     isPlaying: false,
@@ -149,31 +140,18 @@ function App(props: Props) {
     currentIndex: 0,
   };
 
+  // State
   const [{ table, isPlaying, currentIndex, filesS3Keys, error }, dispatch] =
     useReducer(reducer, initialState);
 
   const [dialogContent, setDialogContent] = React.useState<
-    PointOfInterestGeoJsonProperties | undefined
+  PointOfInterestProperties | undefined
   >(undefined);
 
   const fetchingData = useRef<boolean>(false);
+  //////////
 
-  const fetchData = async (index: number) => {
-    fetchingData.current = true;
-    const key = filesS3Keys[index];
-    try {
-      const data = await getObjectByteArray(s3Client, s3Bucket, key);
-      const table = arrow.tableFromIPC(data);
-      dispatch({ type: "tableFetched", result: table });
-      fetchingData.current = false;
-    } catch (err) {
-      dispatch({
-        type: "failure",
-        error: `Failure while trying to fetch table for file: ${key}`,
-      });
-    }
-  };
-
+  // useEffect
   useEffect(() => {
     listObjectsWithPrefix(s3Client, s3Bucket, s3Prefix).then(
       async (objects) => {
@@ -184,15 +162,6 @@ function App(props: Props) {
       },
     );
   }, []);
-
-  const handleChangeDate = async (newIndex: number, commited: boolean) => {
-    dispatch({ type: "dateChanged", result: newIndex });
-    commited && (await fetchData(newIndex));
-  };
-
-  const handlePlayPause = async (newValue: boolean) => {
-    dispatch({ type: "PlayButtonClicked", result: newValue });
-  };
 
   useEffect(() => {
     if (animationTimer !== undefined) {
@@ -228,6 +197,34 @@ function App(props: Props) {
   useEffect(() => {
     filesS3Keys.length > 0 && fetchData(currentIndex);
   }, [filesS3Keys]);
+  //////////
+
+
+  const fetchData = async (index: number) => {
+    fetchingData.current = true;
+    const key = filesS3Keys[index];
+    try {
+      const data = await getObjectByteArray(s3Client, s3Bucket, key);
+      const table = arrow.tableFromIPC(data);
+      dispatch({ type: "tableFetched", result: table });
+      fetchingData.current = false;
+    } catch (err) {
+      dispatch({
+        type: "failure",
+        error: `Failure while trying to fetch table for file: ${key}`,
+      });
+    }
+  };
+
+  // Handles
+  const handleChangeDate = async (newIndex: number, commited: boolean) => {
+    dispatch({ type: "dateChanged", result: newIndex });
+    commited && (await fetchData(newIndex));
+  };
+
+  const handlePlayPause = async (newValue: boolean) => {
+    dispatch({ type: "PlayButtonClicked", result: newValue });
+  };
 
   const handleClickOpenDialog = (object: any) => {
     if (object && object.properties) {
@@ -238,16 +235,27 @@ function App(props: Props) {
   const handleCloseDialog = () => {
     setDialogContent(undefined);
   };
+  //////////
+
+  function getDateFromS3ObjectFileIndex(index: number): string {
+    if (filesS3Keys.length > 0) {
+      const s3ObjectKey = filesS3Keys[index];
+      const match = s3ObjectKey.match(dateRegExpInFile);
+      return match ? match[0] : "";
+    } else {
+      return "";
+    }
+  }
 
   const geojsonData: FeatureCollection<
     Point,
-    PointOfInterestGeoJsonProperties
+    PointOfInterestProperties
   > = {
     type: "FeatureCollection",
     features: [algalBloomFormation],
   };
 
-  const geoJsonLayer = new GeoJsonLayer<PointOfInterestGeoJsonFeature>({
+  const geoJsonLayer = new GeoJsonLayer<PointOfInterest>({
     id: "GeoJsonLayer",
     data: geojsonData,
     pickable: true,
@@ -283,49 +291,6 @@ function App(props: Props) {
       }),
     );
 
-  function getDateFromS3ObjectFileIndex(index: number): string {
-    if (filesS3Keys.length > 0) {
-      const s3ObjectKey = filesS3Keys[index];
-      const match = s3ObjectKey.match(dateRegExpInFile);
-      return match ? match[0] : "";
-    } else {
-      return "";
-    }
-  }
-
-  function CustomCircularProgress(props: CircularProgressProps) {
-    return (
-      <Box sx={{ position: "relative" }}>
-        <CircularProgress
-          variant="determinate"
-          sx={(theme) => ({
-            color: theme.palette.grey[200],
-          })}
-          size={40}
-          thickness={4}
-          {...props}
-          value={100}
-        />
-        <CircularProgress
-          variant="indeterminate"
-          disableShrink
-          sx={() => ({
-            color: rgba2hex(polygonColor),
-            animationDuration: "550ms",
-            position: "absolute",
-            left: 0,
-            [`& .${circularProgressClasses.circle}`]: {
-              strokeLinecap: "round",
-            },
-          })}
-          size={40}
-          thickness={4}
-          {...props}
-        />
-      </Box>
-    );
-  }
-
   return (
     <div className="my-app">
       <DeckGL
@@ -353,7 +318,7 @@ function App(props: Props) {
       </DeckGL>
       {fetchingData.current && (
         <Box sx={{ display: "flex" }}>
-          <CustomCircularProgress />
+          <CustomCircularProgress wheelHexadecimalColor={rgba2hex(polygonColor)}/>
         </Box>
       )}
       <Box className="header">
