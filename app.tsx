@@ -10,15 +10,26 @@ import {
   circularProgressClasses,
   CircularProgressProps,
   createTheme,
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   Slider,
   ThemeProvider,
   Tooltip,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import * as arrow from "apache-arrow";
 import * as d3 from "d3";
-import DeckGL, { Layer, MapView, MapViewState, PickingInfo } from "deck.gl";
+import DeckGL, {
+  GeoJsonLayer,
+  Layer,
+  MapView,
+  MapViewState,
+  PickingInfo,
+} from "deck.gl";
+import { FeatureCollection, Point } from "geojson";
 import React, { useEffect, useReducer, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { StaticMap } from "react-map-gl";
@@ -26,6 +37,11 @@ import "./App.css";
 import { ColorRamp, RGB, rgba2hex } from "./common";
 import MercatorLogo from "./img/MOi_rectangle-transparentbackground-color.png";
 import { Legend } from "./Legend";
+import {
+  algalBloomFormation,
+  PointOfInterestGeoJsonFeature,
+  PointOfInterestGeoJsonProperties,
+} from "./points-of-interest/AlgalBloomFormation";
 import { reducer } from "./reducer";
 import {
   getAnonymousS3Client,
@@ -42,7 +58,7 @@ const INITIAL_VIEW_STATE: MapViewState = {
   minZoom: 2,
 };
 
-const COLOR_LOW_RGB: RGB = {r: 0, g: 0, b: 0, opacity: 0}
+const COLOR_LOW_RGB: RGB = { r: 0, g: 0, b: 0, opacity: 0 };
 
 const COLOR_LOW = d3.color(
   `rgba(${COLOR_LOW_RGB.r},${COLOR_LOW_RGB.g},${COLOR_LOW_RGB.b},${COLOR_LOW_RGB.opacity})`,
@@ -84,8 +100,8 @@ function App(props: Props) {
     applicationTitle,
   } = props;
   const { s3Client, s3Bucket, s3Prefix } = s3Info;
-  const theme = useTheme()
-  
+  const theme = useTheme();
+
   const colorHigh = d3.color(
     `rgba(${polygonColor.r},${polygonColor.g},${polygonColor.b},${polygonColor.opacity})`,
   );
@@ -95,27 +111,30 @@ function App(props: Props) {
     minColor: COLOR_LOW_RGB,
     maxValue: 1,
     maxColor: polygonColor,
-  }
-  const colorGradient = d3.scaleLog([colorRamp.minValue, colorRamp.maxValue], [COLOR_LOW, colorHigh]);
+  };
+  const colorGradient = d3.scaleLog(
+    [colorRamp.minValue, colorRamp.maxValue],
+    [COLOR_LOW, colorHigh],
+  );
 
   const legendStops = [
     {
       value: 0.05,
-      color: d3.color(colorGradient(0.05)!).toString()
+      color: d3.color(colorGradient(0.05)!).toString(),
     },
     {
       value: 0.2,
-      color: d3.color(colorGradient(0.2)!).toString()
+      color: d3.color(colorGradient(0.2)!).toString(),
     },
     {
       value: 0.5,
-      color: d3.color(colorGradient(0.5)!).toString()
+      color: d3.color(colorGradient(0.5)!).toString(),
     },
     {
-      value:(1),
-      color: d3.color(colorGradient(1)!).toString()
-    }
-  ]
+      value: 1,
+      color: d3.color(colorGradient(1)!).toString(),
+    },
+  ];
 
   const onClick = (info: PickingInfo) => {
     if (info.object) {
@@ -132,6 +151,10 @@ function App(props: Props) {
 
   const [{ table, isPlaying, currentIndex, filesS3Keys, error }, dispatch] =
     useReducer(reducer, initialState);
+
+  const [dialogContent, setDialogContent] = React.useState<
+    PointOfInterestGeoJsonProperties | undefined
+  >(undefined);
 
   const fetchingData = useRef<boolean>(false);
 
@@ -164,9 +187,8 @@ function App(props: Props) {
 
   const handleChangeDate = async (newIndex: number, commited: boolean) => {
     dispatch({ type: "dateChanged", result: newIndex });
-    commited && await fetchData(newIndex);
+    commited && (await fetchData(newIndex));
   };
-
 
   const handlePlayPause = async (newValue: boolean) => {
     dispatch({ type: "PlayButtonClicked", result: newValue });
@@ -207,7 +229,36 @@ function App(props: Props) {
     filesS3Keys.length > 0 && fetchData(currentIndex);
   }, [filesS3Keys]);
 
-  const layers: Layer[] = [];
+  const handleClickOpenDialog = (object: any) => {
+    if (object && object.properties) {
+      setDialogContent(object.properties);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setDialogContent(undefined);
+  };
+
+  const geojsonData: FeatureCollection<
+    Point,
+    PointOfInterestGeoJsonProperties
+  > = {
+    type: "FeatureCollection",
+    features: [algalBloomFormation],
+  };
+
+  const geoJsonLayer = new GeoJsonLayer<PointOfInterestGeoJsonFeature>({
+    id: "GeoJsonLayer",
+    data: geojsonData,
+    pickable: true,
+    stroked: false,
+    filled: true,
+    onClick: () => console.log("test"),
+    pointRadiusMinPixels: 5,
+    getFillColor: [255, 0, 0, 255],
+  });
+
+  const layers: Layer[] = [geoJsonLayer];
 
   table &&
     layers.push(
@@ -241,7 +292,6 @@ function App(props: Props) {
       return "";
     }
   }
-
 
   function CustomCircularProgress(props: CircularProgressProps) {
     return (
@@ -280,9 +330,19 @@ function App(props: Props) {
     <div className="my-app">
       <DeckGL
         initialViewState={INITIAL_VIEW_STATE}
-        controller
+        controller={{
+          dragPan: true,
+          dragRotate: false,
+        }}
         layers={layers}
-        onClick={onClick}
+        getTooltip={(layer) =>
+          layer.object && `${layer.object.properties.title}`
+        }
+        onClick={(layer) => {
+          if (layer.object !== undefined) {
+            handleClickOpenDialog(layer.object);
+          }
+        }}
         views={
           new MapView({
             repeat: true,
@@ -298,7 +358,9 @@ function App(props: Props) {
       )}
       <Box className="header">
         <img src={MercatorLogo} alt="Mercator" />
-        <Box className="application-title" color={theme.palette.primary.main}>{applicationTitle}</Box>
+        <Box className="application-title" color={theme.palette.primary.main}>
+          {applicationTitle}
+        </Box>
       </Box>
       <Box className="download-file-button">
         <Tooltip title="Download source data file" placement="left">
@@ -318,8 +380,18 @@ function App(props: Props) {
             onClick={() => handlePlayPause(!isPlaying)}
           />
         )}
-        <div style={{display: "flex", flexDirection: "row", width: '90%', alignItems: "center"}}>
-          <Legend title={"Chl-a surface coverage (normalized concentration)"} legendStops={legendStops}></Legend>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            width: "90%",
+            alignItems: "center",
+          }}
+        >
+          <Legend
+            title={"Chl-a surface coverage (normalized concentration)"}
+            legendStops={legendStops}
+          ></Legend>
           <Slider
             valueLabelDisplay="on"
             valueLabelFormat={getDateFromS3ObjectFileIndex(currentIndex)}
@@ -336,6 +408,28 @@ function App(props: Props) {
           />
         </div>
       </Box>
+      <Dialog
+        open={dialogContent !== undefined}
+        onClose={handleCloseDialog}
+        fullWidth
+        maxWidth={"lg"}
+      >
+        <DialogTitle>{dialogContent && dialogContent.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id="alert-dialog-description"
+            style={{ display: "flex" }}
+          >
+            <img
+              style={{ width: "400px" }}
+              src={dialogContent && dialogContent.preview}
+            ></img>
+            <div style={{ marginLeft: "20px" }}>
+              {dialogContent && dialogContent.description}
+            </div>
+          </DialogContentText>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -355,11 +449,10 @@ const sourceDataFileDownloadUrl =
 
 const s3Client = getAnonymousS3Client(S3_ENDPOINT, S3_REGION);
 
-
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1B2F58',
+      main: "#1B2F58",
     },
     secondary: {
       main: "#80C5DE",
@@ -380,8 +473,9 @@ createRoot(container).render(
       }}
       featherFileRegExp={featherFileRegExp}
       dateRegExpInFile={dateRegExpInFile}
-      polygonColor={{r: 0, g: 109, b: 44, opacity: 1}}
+      polygonColor={{ r: 0, g: 109, b: 44, opacity: 1 }}
       sourceDataFileDownloadUrl={sourceDataFileDownloadUrl}
-    />,
-  </ThemeProvider>
+    />
+    ,
+  </ThemeProvider>,
 );
