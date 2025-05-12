@@ -369,7 +369,7 @@ function App(props: Props) {
         >
           <Legend
             title={"Chl-a surface coverage"}
-            subtitle={"normalized concentration"}
+            subtitle={"i.e. normalized concentration"}
             legendStops={legendStops}
           ></Legend>
           <Slider
