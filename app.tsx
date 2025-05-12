@@ -1,7 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { GeoArrowPolygonLayer } from "@geoarrow/deck.gl-layers";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
-import InfoIcon from '@mui/icons-material/Info';
+import InfoIcon from "@mui/icons-material/Info";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import {
@@ -146,7 +146,7 @@ function App(props: Props) {
     description:
       "Chlorophyll offers a window into the health of our marine ecosystems. Because it is tied to algae and plant growth, tracking it can reveal early signs of problems like nutrient pollution, harmful algal blooms, or disruptions in fish habitats— all of which have direct economic and social consequences. Seasonal forecasts can provide advanced warnings of large-scale ecological changes driven by shifts in ocean conditions, such as warming waters or changes in nutrient cycles. This means the ability to make smarter, forward-looking decisions-whether it's safeguarding fisheries that support local jobs, protecting public health from toxic blooms, or planning coastal resilience strategies in a changing climate.",
     preview: ApplicationInformation,
-    citation: undefined
+    citations: undefined,
   };
 
   const [dialogContent, setDialogContent] = React.useState<
@@ -230,7 +230,9 @@ function App(props: Props) {
     dispatch({ type: "PlayButtonClicked", result: newValue });
   };
 
-  const handleClickOpenDialog = (dialogProperties: PointOfInterestProperties) => {
+  const handleClickOpenDialog = (
+    dialogProperties: PointOfInterestProperties,
+  ) => {
     setDialogContent(dialogProperties);
   };
 
@@ -334,11 +336,18 @@ function App(props: Props) {
         <Box className="application-title" color={theme.palette.primary.main}>
           {applicationTitle}
         </Box>
-        
       </Box>
-      <Box className="download-file-button" style={{display: "flex", flexDirection: "column"}}>
-        <Tooltip title="Why seasonal forecasting?" placement="left" >
-          <IconButton color="primary" onClick={() => handleClickOpenDialog(ApplicationInformationDialogContent)} >
+      <Box
+        className="download-file-button"
+        style={{ display: "flex", flexDirection: "column" }}
+      >
+        <Tooltip title="Why seasonal forecasting?" placement="left">
+          <IconButton
+            color="primary"
+            onClick={() =>
+              handleClickOpenDialog(ApplicationInformationDialogContent)
+            }
+          >
             <InfoIcon />
           </IconButton>
         </Tooltip>
@@ -396,17 +405,28 @@ function App(props: Props) {
       >
         <DialogTitle>{dialogContent && dialogContent.title}</DialogTitle>
         <DialogContent>
-          <DialogContentText
-            id="alert-dialog-description"
-            style={{ display: "flex", alignItems: "center" }}
-          >
-            <img
-              style={{ width: "auto", height: "auto", maxWidth: "800px", maxHeight: "400px" }}
-              src={dialogContent && dialogContent.preview}
-            ></img>
-            <div style={{ marginLeft: "20px" }}>
-              {dialogContent && dialogContent.description}
+          <DialogContentText id="alert-dialog-description">
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <img
+                style={{
+                  width: "auto",
+                  height: "auto",
+                  maxWidth: "800px",
+                  maxHeight: "400px",
+                }}
+                src={dialogContent && dialogContent.preview}
+              ></img>
+              <div style={{ marginLeft: "20px" }}>
+                {dialogContent && dialogContent.description}
+              </div>
             </div>
+            {dialogContent && dialogContent.citations && (
+              <div style={{marginTop: "20px", fontSize: "12px"}}>
+                {dialogContent.citations.map((citation, index) => (
+                  <div id={`citation-${index}`} style={{marginTop: "5px"}}>{citation}</div>
+                ))}
+              </div>
+            )}
           </DialogContentText>
         </DialogContent>
       </Dialog>
