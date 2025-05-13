@@ -31,10 +31,12 @@ import { CustomCircularProgress } from "./Components/CircularProgress";
 import { Legend } from "./Components/Legend";
 import ApplicationInformation from "./img/applicationInformation.png";
 import MercatorLogo from "./img/MOi_rectangle-transparentbackground-color.png";
+import { algalBloomFormation } from "./points-of-interest/AlgalBloomFormation";
 import {
-  algalBloomFormation,
-} from "./points-of-interest/AlgalBloomFormation";
-import { PointOfInterest, PointOfInterestProperties } from "./points-of-interest/common";
+  PointOfInterest,
+  PointOfInterestProperties,
+} from "./points-of-interest/common";
+import { ecosystemBasedFisheriesManagementOfBristolBayRedKingCrab } from "./points-of-interest/EcosystemBasedFisheriesManagementOfBristolBayRedKingCrab";
 import { octopusVulgarisInNorthernSpain } from "./points-of-interest/OctopusVulgarisInNorthernSpain";
 import { shiftsInAmericanLobsterPopulations } from "./points-of-interest/ShiftsInAmericanLobsterPopulations";
 import { reducer } from "./reducer";
@@ -254,7 +256,12 @@ function App(props: Props) {
 
   const geojsonData: FeatureCollection<Point, PointOfInterestProperties> = {
     type: "FeatureCollection",
-    features: [algalBloomFormation, octopusVulgarisInNorthernSpain, shiftsInAmericanLobsterPopulations],
+    features: [
+      algalBloomFormation,
+      octopusVulgarisInNorthernSpain,
+      shiftsInAmericanLobsterPopulations,
+      ecosystemBasedFisheriesManagementOfBristolBayRedKingCrab,
+    ],
   };
 
   const pointsOfInterestLayers = new GeoJsonLayer<PointOfInterest>({
@@ -422,9 +429,11 @@ function App(props: Props) {
               </div>
             </div>
             {dialogContent && dialogContent.citations && (
-              <div style={{marginTop: "20px", fontSize: "12px"}}>
+              <div style={{ marginTop: "20px", fontSize: "12px" }}>
                 {dialogContent.citations.map((citation, index) => (
-                  <div id={`citation-${index}`} style={{marginTop: "5px"}}>{citation}</div>
+                  <div id={`citation-${index}`} style={{ marginTop: "5px" }}>
+                    {citation}
+                  </div>
                 ))}
               </div>
             )}
