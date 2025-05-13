@@ -36,6 +36,7 @@ import {
 } from "./points-of-interest/AlgalBloomFormation";
 import { PointOfInterest, PointOfInterestProperties } from "./points-of-interest/common";
 import { octopusVulgarisInNorthernSpain } from "./points-of-interest/OctopusVulgarisInNorthernSpain";
+import { shiftsInAmericanLobsterPopulations } from "./points-of-interest/ShiftsInAmericanLobsterPopulations";
 import { reducer } from "./reducer";
 import {
   getAnonymousS3Client,
@@ -253,7 +254,7 @@ function App(props: Props) {
 
   const geojsonData: FeatureCollection<Point, PointOfInterestProperties> = {
     type: "FeatureCollection",
-    features: [algalBloomFormation, octopusVulgarisInNorthernSpain],
+    features: [algalBloomFormation, octopusVulgarisInNorthernSpain, shiftsInAmericanLobsterPopulations],
   };
 
   const pointsOfInterestLayers = new GeoJsonLayer<PointOfInterest>({
