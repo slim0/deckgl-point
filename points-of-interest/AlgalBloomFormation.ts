@@ -1,13 +1,4 @@
-import { Feature, Point } from "geojson";
-
-export type PointOfInterestProperties = {
-  title: string;
-  description: string;
-  citations: string[];
-  preview: string;
-};
-
-export type PointOfInterest = Feature<Point, PointOfInterestProperties>;
+import { PointOfInterest } from "./common";
 
 export const algalBloomFormation: PointOfInterest = {
   type: "Feature",

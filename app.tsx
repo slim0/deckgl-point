@@ -33,9 +33,9 @@ import ApplicationInformation from "./img/applicationInformation.png";
 import MercatorLogo from "./img/MOi_rectangle-transparentbackground-color.png";
 import {
   algalBloomFormation,
-  PointOfInterest,
-  PointOfInterestProperties,
 } from "./points-of-interest/AlgalBloomFormation";
+import { PointOfInterest, PointOfInterestProperties } from "./points-of-interest/common";
+import { octopusVulgarisInNorthernSpain } from "./points-of-interest/OctopusVulgarisInNorthernSpain";
 import { reducer } from "./reducer";
 import {
   getAnonymousS3Client,
@@ -146,7 +146,7 @@ function App(props: Props) {
     description:
       "Chlorophyll offers a window into the health of our marine ecosystems. Because it is tied to algae and plant growth, tracking it can reveal early signs of problems like nutrient pollution, harmful algal blooms, or disruptions in fish habitats— all of which have direct economic and social consequences. Seasonal forecasts can provide advanced warnings of large-scale ecological changes driven by shifts in ocean conditions, such as warming waters or changes in nutrient cycles. This means the ability to make smarter, forward-looking decisions-whether it's safeguarding fisheries that support local jobs, protecting public health from toxic blooms, or planning coastal resilience strategies in a changing climate.",
     preview: ApplicationInformation,
-    citations: undefined,
+    citations: [],
   };
 
   const [dialogContent, setDialogContent] = React.useState<
@@ -253,7 +253,7 @@ function App(props: Props) {
 
   const geojsonData: FeatureCollection<Point, PointOfInterestProperties> = {
     type: "FeatureCollection",
-    features: [algalBloomFormation],
+    features: [algalBloomFormation, octopusVulgarisInNorthernSpain],
   };
 
   const pointsOfInterestLayers = new GeoJsonLayer<PointOfInterest>({
